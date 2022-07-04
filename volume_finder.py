@@ -99,6 +99,9 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
     vox_1_without_2_matrix = trimesh.voxel.ops.sparse_to_matrix(vox_1_without_2_indices)
     vox_1_without_2_voxel_grid = trimesh.voxel.VoxelGrid(vox_1_without_2_matrix)
     vox_1_without_2_voxel_grid.apply_scale(voxel_grid_1.pitch[0])
+    vox_1_without_2_voxel_grid = vox_1_without_2_voxel_grid.copy()
+    vox_1_without_2_voxel_grid.apply_translation([min_x, min_y, min_z])
+    vox_1_without_2_voxel_grid = vox_1_without_2_voxel_grid.copy()
     return vox_1_without_2_voxel_grid
 
 def voxel_or(voxel_grid_1, voxel_grid_2):
@@ -108,16 +111,19 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     two input grids have the same shape."""
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
-    vox_1_and_2_points = np.append(voxel_grid_1.points, voxel_grid_2.points, axis=0)
-    min_x = min(vox_1_and_2_points[:,0])
-    min_y = min(vox_1_and_2_points[:,1])
-    min_z = min(vox_1_and_2_points[:,2])
-    vox_1_and_2_indices = trimesh.voxel.ops.points_to_indices(vox_1_and_2_points,
+    vox_1_or_2_points = np.append(voxel_grid_1.points, voxel_grid_2.points, axis=0)
+    min_x = min(vox_1_or_2_points[:,0])
+    min_y = min(vox_1_or_2_points[:,1])
+    min_z = min(vox_1_or_2_points[:,2])
+    vox_1_or_2_indices = trimesh.voxel.ops.points_to_indices(vox_1_or_2_points,
                                                                   pitch=voxel_grid_1.pitch[0],
                                                                   origin=[min_x, min_y, min_z])
-    vox_1_and_2_matrix = trimesh.voxel.ops.sparse_to_matrix(vox_1_and_2_indices)
-    vox_1_and_2_voxel_grid = trimesh.voxel.VoxelGrid(vox_1_and_2_matrix)
-    vox_1_and_2_voxel_grid.apply_scale(voxel_grid_1.pitch[0])
-    return vox_1_and_2_voxel_grid
+    vox_1_or_2_matrix = trimesh.voxel.ops.sparse_to_matrix(vox_1_or_2_indices)
+    vox_1_or_2_voxel_grid = trimesh.voxel.VoxelGrid(vox_1_or_2_matrix)
+    vox_1_or_2_voxel_grid.apply_scale(voxel_grid_1.pitch[0])
+    vox_1_or_2_voxel_grid = vox_1_or_2_voxel_grid.copy()
+    vox_1_or_2_voxel_grid.apply_translation([min_x, min_y, min_z])
+    vox_1_or_2_voxel_grid = vox_1_or_2_voxel_grid.copy()
+    return vox_1_or_2_voxel_grid
 
 
