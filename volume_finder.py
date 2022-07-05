@@ -2,6 +2,7 @@ import math
 import numpy as np
 import MDAnalysis as mda
 import trimesh
+import pyvista as pv
 
 
 class ProteinSurface:
@@ -126,4 +127,24 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     vox_1_or_2_voxel_grid = vox_1_or_2_voxel_grid.copy()
     return vox_1_or_2_voxel_grid
 
+def show_pocket(prot_vox, pocket_vox):
 
+    prot_vox = prot_vox.copy()
+    prot_vox.hollow()
+    prot_trimesh = prot_vox.as_boxes()
+    prot_pv = pv.wrap(prot_trimesh)
+
+    pocket_vox = pocket_vox.copy()    
+    pocket_vox.hollow()
+    pocket_trimesh = pocket_vox.as_boxes()
+    pocket_pv = pv.wrap(pocket_trimesh)
+    
+    pl = pv.Plotter(shape=(2,2))
+    pl.add_mesh(prot_pv, show_edges=True, opacity=0.5, color='grey')
+    pl.add_mesh(pocket_pv, color="red")
+    pl.subplot(0,1)
+    pl.add_mesh(pocket_pv, color="red")
+    pl.subplot(1,0)
+    pl.add_mesh(prot_pv, show_edges=True, opacity=0.5, color='grey')
+    pl.link_views()
+    pl.show()
