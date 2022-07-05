@@ -134,7 +134,7 @@ def show_pocket(prot_vox, pocket_vox):
     prot_trimesh = prot_vox.as_boxes()
     prot_pv = pv.wrap(prot_trimesh)
 
-    pocket_vox = pocket_vox.copy()    
+    pocket_vox = pocket_vox.copy()
     pocket_vox.hollow()
     pocket_trimesh = pocket_vox.as_boxes()
     pocket_pv = pv.wrap(pocket_trimesh)
