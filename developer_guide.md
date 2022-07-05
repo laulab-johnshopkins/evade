@@ -8,3 +8,14 @@ Documentation is stored in the `doc` directory.  To recreate this directory, do 
   * In the `extensions` list (which is initially empty), add `'sphinx.ext.autodoc'` and `'sphinx.ext.napoleon'`.
 * Run the command `sphinx-apidoc -f -o doc/source .`
 * Run the command `sphinx-build -b html doc/source doc/build/`.
+* NOTES:
+  * There will be an error about `modules.rst` not being in any toctree.  This can be fixed by changing `index.rst` to include the following (including whitespace):
+
+
+
+               :caption: Contents:
+          
+               modules.rst
+               
+  * The output `index.html` might lack sufficient text.  If so, edit `index.rst`.
+      * Under the `toctree` command, you can add filenames.  E.g. add `page1` if there is a `page1.rst` file.  Note that the rst file must have a title for autodoc to include it.
