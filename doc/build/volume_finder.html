@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>volume_finder module &#8212; volume_finder 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-volume_finder">
+<span id="volume-finder-module"></span><h1>volume_finder module<a class="headerlink" href="#module-volume_finder" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="volume_finder.ProteinSurface">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.check_equal_pitches">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">check_equal_pitches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.check_equal_pitches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that two voxel grids have the same pitch as each other.</p>
+<p>Verifies that voxel_grid_1 and voxel_grid_2 have
+pitches equal to each other and the same in each
+direction.  Raises an error if this is not true.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel_grid_1</strong> (<em>trimesh VoxelGrid object</em>) – First shape to compare</p></li>
+<li><p><strong>voxel_grid_2</strong> (<em>trimesh VoxelGrid object</em>) – Second shape to compare</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the two shapes have the same pitch as each other and in all directions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.show_pocket">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prot_vox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_vox</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.show_pocket" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.voxel_or">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_or</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_or" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a VoxelGrid object containing all points in
+voxel_grid_1 and/or voxel_grid_2.  Unlike the trimesh library’s
+boolean_sparse function, this function does not require that the
+two input grids have the same shape.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.voxel_subtract">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_subtract" title="Permalink to this definition">¶</a></dt>
+<dd><p>voxel_grid_1 - voxel_grid_2. Returns a VoxelGrid
+object containing all points in voxel_grid_1 that are
+not in voxel_grid_2.  The returned VoxelGrid’s origin is
+[0,0,0] and its pitch is the same as the input arguments’
+pitch.</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">volume_finder</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Daniel Evans.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/volume_finder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

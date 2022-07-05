@@ -6,13 +6,12 @@ import pyvista as pv
 
 
 class ProteinSurface:
-    def __init__(self, mda_atomgroup, solvent_rad):
+    def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7):
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad # FIXME private?
         
         # Generate surface
         dict_radius_to_voxel_sphere = {}
-        grid_size = 0.7
         atom = self.mda_atomgroup[0]
         try:
             element = atom.element
@@ -21,7 +20,7 @@ class ProteinSurface:
         vdw_rad = vdw_rads[element]
         sphere_rad = vdw_rad + solvent_rad
         next_sphere = trimesh.primitives.Sphere(center=atom.position, radius=sphere_rad, subdivisions=2)
-        next_voxel = next_sphere.voxelized(grid_size) # FIXME corresponds to slow part
+        next_voxel = next_sphere.voxelized(grid_size)
         voxel_points =list(next_voxel.points)
         min_x = next_voxel.origin[0]
         min_y = next_voxel.origin[1]
@@ -63,9 +62,26 @@ class ProteinSurface:
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 def check_equal_pitches(voxel_grid_1, voxel_grid_2):
-    """Verifies that voxel_grid_1 and voxel_grid_2 have
+    """
+    Verify that two voxel grids have the same pitch as each other.
+    
+    Verifies that voxel_grid_1 and voxel_grid_2 have
     pitches equal to each other and the same in each
-    direction.  Raises an error if this is not true."""
+    direction.  Raises an error if this is not true.
+    
+    Parameters
+    ----------
+    voxel_grid_1 : trimesh VoxelGrid object
+        First shape to compare
+    voxel_grid_2 : trimesh VoxelGrid object
+        Second shape to compare
+
+    Returns
+    -------
+    bool
+        Whether the two shapes have the same pitch as each other and in all directions
+    """
+    
     if len(np.unique(voxel_grid_1.pitch)) > 1:
         raise ValueError("voxel_grid_1.pitch values not uniform")
     if len(np.unique(voxel_grid_2.pitch)) > 1:
