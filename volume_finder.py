@@ -81,7 +81,7 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
     bool
         Whether the two shapes have the same pitch as each other and in all directions
     """
-    
+
     if len(np.unique(voxel_grid_1.pitch)) > 1:
         raise ValueError("voxel_grid_1.pitch values not uniform")
     if len(np.unique(voxel_grid_2.pitch)) > 1:
@@ -92,9 +92,8 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
 def voxel_subtract(voxel_grid_1, voxel_grid_2):
     """voxel_grid_1 - voxel_grid_2. Returns a VoxelGrid
     object containing all points in voxel_grid_1 that are
-    not in voxel_grid_2.  The returned VoxelGrid's origin is
-    [0,0,0] and its pitch is the same as the input arguments'
-    pitch.""" 
+    not in voxel_grid_2.  The returned VoxelGrid's pitch is
+    the same as the input arguments' pitch.""" 
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
@@ -143,6 +142,36 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     vox_1_or_2_voxel_grid = vox_1_or_2_voxel_grid.copy()
     return vox_1_or_2_voxel_grid
 
+def voxel_and(voxel_grid_1, voxel_grid_2):
+    """Returns a VoxelGrid
+    object containing all points in both voxel_grid_1 and
+    voxel_grid_2.""" 
+    
+    check_equal_pitches(voxel_grid_1, voxel_grid_2)
+    
+    # Check which points from voxel_grid_1 are in voxel_grid_2.
+    vox_1_and_2_points = [] # initialization
+    # FIXME decimal place is magic number
+    vox_2_points = set(tuple(point) for point in voxel_grid_2.points.round(decimals=5).tolist())
+    for point in voxel_grid_1.points.round(decimals=5).tolist():
+        if tuple(point) in vox_2_points:
+            vox_1_and_2_points.append(point)
+
+    vox_1_and_2_points = np.array(vox_1_and_2_points)
+    min_x = min(vox_1_and_2_points[:,0])
+    min_y = min(vox_1_and_2_points[:,1])
+    min_z = min(vox_1_and_2_points[:,2])
+    vox_1_and_2_indices = trimesh.voxel.ops.points_to_indices(vox_1_and_2_points,
+                                                              pitch=voxel_grid_1.pitch[0],
+                                                              origin=[min_x,min_y,min_z])
+    vox_1_and_2_matrix = trimesh.voxel.ops.sparse_to_matrix(vox_1_and_2_indices)
+    vox_1_and_2_voxel_grid = trimesh.voxel.VoxelGrid(vox_1_and_2_matrix)
+    vox_1_and_2_voxel_grid.apply_scale(voxel_grid_1.pitch[0])
+    vox_1_and_2_voxel_grid = vox_1_and_2_voxel_grid.copy()
+    vox_1_and_2_voxel_grid.apply_translation([min_x, min_y, min_z])
+    vox_1_and_2_voxel_grid = vox_1_and_2_voxel_grid.copy()
+    return vox_1_and_2_voxel_grid
+
 def show_pocket(prot_vox, pocket_vox):
 
     prot_vox = prot_vox.copy()
@@ -154,7 +183,7 @@ def show_pocket(prot_vox, pocket_vox):
     pocket_vox.hollow()
     pocket_trimesh = pocket_vox.as_boxes()
     pocket_pv = pv.wrap(pocket_trimesh)
-   
+    
     pl = pv.Plotter(shape=(2,2))
     pl.add_mesh(prot_pv, color='red')
     pl.add_mesh(pocket_pv, color="blue")
@@ -163,4 +192,4 @@ def show_pocket(prot_vox, pocket_vox):
     pl.subplot(1,0)
     pl.add_mesh(prot_pv, color='red')
     pl.link_views()
-    pl.show() 
+    pl.show()
