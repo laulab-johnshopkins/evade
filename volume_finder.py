@@ -4,6 +4,11 @@ import MDAnalysis as mda
 import trimesh
 import pyvista as pv
 
+class AtomGeo:
+    def __init__(self, mda_atom, voxel_sphere):
+        self.mda_atom = mda_atom
+        self.voxel_sphere = voxel_sphere
+
 
 class ProteinSurface:
     def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7):
@@ -19,12 +24,13 @@ class ProteinSurface:
             element = mda.topology.guessers.guess_atom_element(atom.type)
         vdw_rad = vdw_rads[element]
         sphere_rad = vdw_rad + solvent_rad
-        next_sphere = trimesh.primitives.Sphere(center=atom.position, radius=sphere_rad, subdivisions=2)
+        next_sphere = trimesh.primitives.Sphere(center=atom.position, radius=sphere_rad, subdivisions=2) # FIXME wrong center?
         next_voxel = next_sphere.voxelized(grid_size)
         voxel_points =list(next_voxel.points)
         min_x = next_voxel.origin[0]
         min_y = next_voxel.origin[1]
         min_z = next_voxel.origin[2]
+        self.atom_geo_list = []
         for atom in self.mda_atomgroup[1:]:
             try:
                 element = atom.element
@@ -33,15 +39,23 @@ class ProteinSurface:
             vdw_rad = vdw_rads[element]
             sphere_rad = vdw_rad + solvent_rad
             if sphere_rad not in dict_radius_to_voxel_sphere:
-                next_sphere = trimesh.primitives.Sphere(center=[0,0,0], radius=sphere_rad, subdivisions=2)
+                next_sphere = trimesh.primitives.Sphere(center=[0,0,0], radius=sphere_rad-3/5*grid_size, subdivisions=2)
                 dict_radius_to_voxel_sphere[sphere_rad] = next_sphere.voxelized(grid_size)
             next_voxel = dict_radius_to_voxel_sphere[sphere_rad].copy()
-            next_voxel.apply_translation(next_voxel.origin + atom.position)
+            # The round() code shifts the point to the nearest multiple of grid_size.  This is necessary
+            # because otherwise the origin could be offset from the expected grid, breaking the boolean code.
+            exact_trans = atom.position
+            approx_trans_x = round(exact_trans[0] / grid_size) * grid_size
+            approx_trans_y = round(exact_trans[1] / grid_size) * grid_size
+            approx_trans_z = round(exact_trans[2] / grid_size) * grid_size
+
+            next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y, approx_trans_z]))
             next_voxel = next_voxel.copy()
             voxel_points += list(next_voxel.points)
             min_x = min(min_x, next_voxel.origin[0])
             min_y = min(min_y, next_voxel.origin[1])
             min_z = min(min_z, next_voxel.origin[2])
+            self.atom_geo_list.append(AtomGeo(atom, next_voxel))
         all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size, origin=[min_x,min_y,min_z])
         self.surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
         
@@ -49,12 +63,7 @@ class ProteinSurface:
         # is [0,0,0].  The next few lines fix this.
         self.surf.apply_scale(grid_size)
         self.surf = self.surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
-        # The round() code shifts the point to the nearest multiple of grid_size.  This is necessary
-        # because otherwise the origin could be offset from the expected grid, breaking the boolean code.
-        min_x = round(min_x / grid_size) * grid_size
-        min_y = round(min_y / grid_size) * grid_size
-        min_z = round(min_z / grid_size) * grid_size
-        self.surf.apply_translation([min_x, min_y, min_z])
+        self.surf.apply_translation([min(np.array(voxel_points)[:,0]), min(np.array(voxel_points)[:,1]), min(np.array(voxel_points)[:,2])])
         self.surf = self.surf.copy()
         self.surf.fill()
         self.surf = self.surf.copy()
@@ -145,7 +154,8 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
 def voxel_and(voxel_grid_1, voxel_grid_2):
     """Returns a VoxelGrid
     object containing all points in both voxel_grid_1 and
-    voxel_grid_2.""" 
+    voxel_grid_2.  Returns None if the two objects have no
+    points in common.""" 
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
@@ -157,6 +167,8 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
         if tuple(point) in vox_2_points:
             vox_1_and_2_points.append(point)
 
+    if len(vox_1_and_2_points) == 0:
+        return None
     vox_1_and_2_points = np.array(vox_1_and_2_points)
     min_x = min(vox_1_and_2_points[:,0])
     min_y = min(vox_1_and_2_points[:,1])
