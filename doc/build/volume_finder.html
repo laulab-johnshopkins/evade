@@ -35,6 +35,12 @@
   <section id="module-volume_finder">
 <span id="volume-finder-module"></span><h1>volume_finder module<a class="headerlink" href="#module-volume_finder" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
+<dt class="sig sig-object py" id="volume_finder.AtomGeo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">AtomGeo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_sphere</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.AtomGeo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="volume_finder.ProteinSurface">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -64,27 +70,129 @@ direction.  Raises an error if this is not true.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.generate_voxelized_sphere">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a voxelized sphere.</p>
+<p>The function creates a trimesh VoxelGrid sphere
+based on the input parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius</strong> (<em>float</em>) – Radius of the sphere</p></li>
+<li><p><strong>center</strong> (<em>list-like object</em>) – x, y, z coordinates of the sphere’s center.</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em>) – Length of a side of the voxel grid.  0.5 is a reasonable
+choice.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid containing the sphere.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function creates a spherical triangular mesh then voxelizes it.  Users can also do
+this manually using the trimesh library (instead of using this function).  But this
+isn’t recommended.  Voxelizing a trimesh mesh sphere was observed to give
+larger-than-expected results.  This function compensates for the issue.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.show_pocket">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prot_vox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_vox</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.show_pocket" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Displays a protein and its pocket in a Jupyter notebook.</p>
+<p>Uses PyVista to show both the protein and the pocket volume.
+The protein and pocket are shown as being hollow; i.e. if
+users zoom past the surface they’ll see the inside of the shape.
+The rest of the software package uses filled shapes, but this
+function displays them as hollow to decrease lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prot_vox</strong> (<em>trimesh VoxelGrid object</em>) – The protein</p></li>
+<li><p><strong>pocket_vox</strong> (<em>trimesh VoxelGrid object</em>) – The pocket volume</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.voxel_and">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_and</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_and" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds all points in both voxel_grid_1 and voxel_grid_2.</p>
+<p>Returns a VoxelGrid with all points in both voxel_grid_1
+and voxel_grid_2.  Returns None if the two objects have no
+points in common.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel_grid_1</strong> (<em>trimesh VoxelGrid object</em>) – First shape to be combined.  Must have same pitch in
+each dimension.</p></li>
+<li><p><strong>voxel_grid_2</strong> (<em>trimesh VoxelGrid object</em>) – Second shape to be combined.  Must have same pitch
+in each dimension (and same pitch as voxel_grid_1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid with all points from both voxel_grid_1 and voxel_grid_2</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.voxel_or">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_or</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_or" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a VoxelGrid object containing all points in
-voxel_grid_1 and/or voxel_grid_2.  Unlike the trimesh library’s
+<dd><p>Finds all points in voxel_grid_1 and/or voxel_grid_2.</p>
+<p>Returns a VoxelGrid with all points in at least one of voxel_grid_1 and
+voxel_grid_2.  Unlike the trimesh library’s
 boolean_sparse function, this function does not require that the
 two input grids have the same shape.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel_grid_1</strong> (<em>trimesh VoxelGrid object</em>) – First shape to be combined.  Must have same pitch in
+each dimension.</p></li>
+<li><p><strong>voxel_grid_2</strong> (<em>trimesh VoxelGrid object</em>) – Second shape to be combined.  Must have same pitch
+in each dimension (and same pitch as voxel_grid_1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid with all points from voxel_grid_1 and/or voxel_grid_2</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.voxel_subtract">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_subtract" title="Permalink to this definition">¶</a></dt>
-<dd><p>voxel_grid_1 - voxel_grid_2. Returns a VoxelGrid
-object containing all points in voxel_grid_1 that are
-not in voxel_grid_2.  The returned VoxelGrid’s origin is
-[0,0,0] and its pitch is the same as the input arguments’
-pitch.</p>
+<dd><p>voxel_grid_1 - voxel_grid_2.</p>
+<p>Returns a VoxelGrid object containing all points in
+voxel_grid_1 that are not in voxel_grid_2.  The
+returned VoxelGrid’s pitch is
+the same as the input arguments’ pitch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel_grid_1</strong> (<em>trimesh VoxelGrid object</em>) – Shape to be subtracted from.  Must have same pitch in
+each dimension.</p></li>
+<li><p><strong>voxel_grid_2</strong> (<em>trimesh VoxelGrid object</em>) – Shape that is subtracted away.  Must have same pitch
+in each dimension (and same pitch as voxel_grid_1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid with the remaining points from
+voxel_grid_1</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

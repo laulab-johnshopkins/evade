@@ -99,7 +99,6 @@ def generate_voxelized_sphere(radius, center, grid_size):
     this manually using the trimesh library (instead of using this function).  But this
     isn't recommended.  Voxelizing a trimesh mesh sphere was observed to give
     larger-than-expected results.  This function compensates for the issue.
-
     """
     adjusted_rad = radius - (3/5) * grid_size
     sphere_mesh = trimesh.primitives.Sphere(center=center, radius=adjusted_rad)
@@ -136,11 +135,31 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
     if not (voxel_grid_1.pitch == voxel_grid_2.pitch).all():
         raise ValueError("input VoxelGrid objects have different pitches")
 
+
 def voxel_subtract(voxel_grid_1, voxel_grid_2):
-    """voxel_grid_1 - voxel_grid_2. Returns a VoxelGrid
-    object containing all points in voxel_grid_1 that are
-    not in voxel_grid_2.  The returned VoxelGrid's pitch is
-    the same as the input arguments' pitch.""" 
+    """
+    voxel_grid_1 - voxel_grid_2.
+    
+    Returns a VoxelGrid object containing all points in
+    voxel_grid_1 that are not in voxel_grid_2.  The
+    returned VoxelGrid's pitch is
+    the same as the input arguments' pitch.
+    
+    Parameters
+    ----------
+    voxel_grid_1 : trimesh VoxelGrid object
+        Shape to be subtracted from.  Must have same pitch in
+        each dimension.
+    voxel_grid_2 : trimesh VoxelGrid object
+        Shape that is subtracted away.  Must have same pitch
+        in each dimension (and same pitch as voxel_grid_1).
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid with the remaining points from
+        voxel_grid_1
+    """ 
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
@@ -167,11 +186,29 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
     vox_1_without_2_voxel_grid = vox_1_without_2_voxel_grid.copy()
     return vox_1_without_2_voxel_grid
 
+
 def voxel_or(voxel_grid_1, voxel_grid_2):
-    """Returns a VoxelGrid object containing all points in
-    voxel_grid_1 and/or voxel_grid_2.  Unlike the trimesh library's
+    """Finds all points in voxel_grid_1 and/or voxel_grid_2.
+    
+    Returns a VoxelGrid with all points in at least one of voxel_grid_1 and
+    voxel_grid_2.  Unlike the trimesh library's
     boolean_sparse function, this function does not require that the
-    two input grids have the same shape."""
+    two input grids have the same shape.
+    
+    Parameters
+    ----------
+    voxel_grid_1 : trimesh VoxelGrid object
+        First shape to be combined.  Must have same pitch in
+        each dimension.
+    voxel_grid_2 : trimesh VoxelGrid object
+        Second shape to be combined.  Must have same pitch
+        in each dimension (and same pitch as voxel_grid_1).
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid with all points from voxel_grid_1 and/or voxel_grid_2
+    """
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     vox_1_or_2_points = np.append(voxel_grid_1.points, voxel_grid_2.points, axis=0)
@@ -189,11 +226,28 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     vox_1_or_2_voxel_grid = vox_1_or_2_voxel_grid.copy()
     return vox_1_or_2_voxel_grid
 
+
 def voxel_and(voxel_grid_1, voxel_grid_2):
-    """Returns a VoxelGrid
-    object containing all points in both voxel_grid_1 and
-    voxel_grid_2.  Returns None if the two objects have no
-    points in common.""" 
+    """Finds all points in both voxel_grid_1 and voxel_grid_2.
+    
+    Returns a VoxelGrid with all points in both voxel_grid_1
+    and voxel_grid_2.  Returns None if the two objects have no
+    points in common.
+    
+    Parameters
+    ----------
+    voxel_grid_1 : trimesh VoxelGrid object
+        First shape to be combined.  Must have same pitch in
+        each dimension.
+    voxel_grid_2 : trimesh VoxelGrid object
+        Second shape to be combined.  Must have same pitch
+        in each dimension (and same pitch as voxel_grid_1).
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid with all points from both voxel_grid_1 and voxel_grid_2
+    """ 
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
@@ -223,6 +277,21 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     return vox_1_and_2_voxel_grid
 
 def show_pocket(prot_vox, pocket_vox):
+    """Displays a protein and its pocket in a Jupyter notebook.
+    
+    Uses PyVista to show both the protein and the pocket volume.
+    The protein and pocket are shown as being hollow; i.e. if
+    users zoom past the surface they'll see the inside of the shape.
+    The rest of the software package uses filled shapes, but this
+    function displays them as hollow to decrease lag.
+    
+    Parameters
+    ----------
+    prot_vox : trimesh VoxelGrid object
+        The protein
+    pocket_vox : trimesh VoxelGrid object
+        The pocket volume
+    """ 
 
     prot_vox = prot_vox.copy()
     prot_vox.hollow()
