@@ -70,6 +70,44 @@ class ProteinSurface:
 
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
+
+def generate_voxelized_sphere(radius, center, grid_size):
+    """
+    Creates a voxelized sphere.
+    
+    The function creates a trimesh VoxelGrid sphere
+    based on the input parameters.
+    
+    Parameters
+    ----------
+    radius : float
+        Radius of the sphere
+    center : list-like object
+        x, y, z coordinates of the sphere's center.
+    grid_size : float
+        Length of a side of the voxel grid.  0.5 is a reasonable
+        choice.
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid containing the sphere.
+
+    Notes
+    -----
+    The function creates a spherical triangular mesh then voxelizes it.  Users can also do
+    this manually using the trimesh library (instead of using this function).  But this
+    isn't recommended.  Voxelizing a trimesh mesh sphere was observed to give
+    larger-than-expected results.  This function compensates for the issue.
+
+    """
+    adjusted_rad = radius - (3/5) * grid_size
+    sphere_mesh = trimesh.primitives.Sphere(center=center, radius=adjusted_rad)
+    sphere_voxel = sphere_mesh.voxelized(grid_size)
+    sphere_voxel.fill()
+    return sphere_voxel
+
+
 def check_equal_pitches(voxel_grid_1, voxel_grid_2):
     """
     Verify that two voxel grids have the same pitch as each other.
