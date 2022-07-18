@@ -3,6 +3,7 @@ import numpy as np
 import MDAnalysis as mda
 import trimesh
 import pyvista as pv
+import scipy
 
 class AtomGeo:
     def __init__(self, mda_atom, voxel_sphere):
@@ -24,8 +25,7 @@ class ProteinSurface:
             element = mda.topology.guessers.guess_atom_element(atom.type)
         vdw_rad = vdw_rads[element]
         sphere_rad = vdw_rad + solvent_rad
-        next_sphere = trimesh.primitives.Sphere(center=atom.position, radius=sphere_rad, subdivisions=2) # FIXME wrong center?
-        next_voxel = next_sphere.voxelized(grid_size)
+        next_voxel = generate_voxelized_sphere(sphere_rad, atom.position, grid_size)
         voxel_points =list(next_voxel.points)
         min_x = next_voxel.origin[0]
         min_y = next_voxel.origin[1]
@@ -39,8 +39,8 @@ class ProteinSurface:
             vdw_rad = vdw_rads[element]
             sphere_rad = vdw_rad + solvent_rad
             if sphere_rad not in dict_radius_to_voxel_sphere:
-                next_sphere = trimesh.primitives.Sphere(center=[0,0,0], radius=sphere_rad-3/5*grid_size, subdivisions=2)
-                dict_radius_to_voxel_sphere[sphere_rad] = next_sphere.voxelized(grid_size)
+                next_sphere = generate_voxelized_sphere(sphere_rad, [0,0,0], grid_size)
+                dict_radius_to_voxel_sphere[sphere_rad] = next_sphere
             next_voxel = dict_radius_to_voxel_sphere[sphere_rad].copy()
             # The round() code shifts the point to the nearest multiple of grid_size.  This is necessary
             # because otherwise the origin could be offset from the expected grid, breaking the boolean code.
@@ -82,7 +82,7 @@ def generate_voxelized_sphere(radius, center, grid_size):
     ----------
     radius : float
         Radius of the sphere
-    center : list-like object
+    center : list-like object containing three floats
         x, y, z coordinates of the sphere's center.
     grid_size : float
         Length of a side of the voxel grid.  0.5 is a reasonable
@@ -92,19 +92,100 @@ def generate_voxelized_sphere(radius, center, grid_size):
     -------
     trimesh VoxelGrid object
         A VoxelGrid containing the sphere.
-
-    Notes
-    -----
-    The function creates a spherical triangular mesh then voxelizes it.  Users can also do
-    this manually using the trimesh library (instead of using this function).  But this
-    isn't recommended.  Voxelizing a trimesh mesh sphere was observed to give
-    larger-than-expected results.  This function compensates for the issue.
     """
-    adjusted_rad = radius - (3/5) * grid_size
-    sphere_mesh = trimesh.primitives.Sphere(center=center, radius=adjusted_rad)
-    sphere_voxel = sphere_mesh.voxelized(grid_size)
-    sphere_voxel.fill()
+    x_min = round((center[0]-radius) / grid_size) * grid_size
+    x_max = round((center[0]+radius) / grid_size) * grid_size
+    y_min = round((center[1]-radius) / grid_size) * grid_size
+    y_max = round((center[1]+radius) / grid_size) * grid_size
+    z_min = round((center[2]-radius) / grid_size) * grid_size
+    z_max = round((center[2]+radius) / grid_size) * grid_size
+    
+    # Create a list of all points in the grid.
+    # See https://stackoverflow.com/a/12891609
+    # The complex numbers cause numpy to go from the min to max values
+    # (inclusive of both) with the number of points equal to the complex
+    # number.
+    X, Y, Z = np.mgrid[x_min:x_max:complex(0, (x_max-x_min)/grid_size+1),
+                       y_min:y_max:complex(0, (y_max-y_min)/grid_size+1),
+                       z_min:z_max:complex(0, (z_max-z_min)/grid_size+1)]
+    positions = np.vstack([X.ravel(), Y.ravel(), Z.ravel()])
+    all_grid_points = positions.T
+
+    # Get all points within sphere.
+    # First construct a list of booleans for whether each point is in sphere.
+    # The ending [:,0] is because numpy gives a list-of-lists where each inner list
+    # has length 1.
+    is_in_sphere = (scipy.spatial.distance.cdist(all_grid_points, [center]) < radius)[:,0]
+    points_in_sphere = all_grid_points[is_in_sphere]
+
+    # Convert list of points to trimesh VoxelGrid object.
+    all_indices = trimesh.voxel.ops.points_to_indices(points_in_sphere, pitch=grid_size,
+                                                      origin=[min(points_in_sphere[:,0]), min(points_in_sphere[:,1]),
+                                                              min(points_in_sphere[:,2])])
+    sphere_voxel = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
+    sphere_voxel.apply_scale(grid_size)
+    sphere_voxel = sphere_voxel.copy()
+    sphere_voxel.apply_translation([min(points_in_sphere[:,0]), min(points_in_sphere[:,1]), min(points_in_sphere[:,2])])
+    sphere_voxel = sphere_voxel.copy()
     return sphere_voxel
+
+
+def generate_voxelized_box(lengths, center, grid_size):
+    """
+    Creates a voxelized box.
+    
+    The function creates a trimesh VoxelGrid box
+    based on the input parameters.
+    
+    Parameters
+    ----------
+    lengths : list-like object containing three floats
+        The box's side lengths in x, y, z directions 
+    center : list-like object containing three floats
+        x, y, z coordinates of the sphere's center.
+    grid_size : float
+        Length of a side of the voxel grid.  0.5 is a reasonable
+        choice.
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid containing the box.
+    """
+
+    # The code works with the center points of each voxel, but the function's output box
+    # extends to the voxel's edges.  The 0.5*grid_size accounts for this; the goal is to find
+    # the voxel whose edge is closest to that specified by the input parameters.
+    x_min = round((center[0]-0.5*lengths[0]+0.5*grid_size) / grid_size) * grid_size
+    x_max = round((center[0]+0.5*lengths[0]-0.5*grid_size) / grid_size) * grid_size
+    y_min = round((center[1]-0.5*lengths[1]+0.5*grid_size) / grid_size) * grid_size
+    y_max = round((center[1]+0.5*lengths[1]-0.5*grid_size) / grid_size) * grid_size
+    z_min = round((center[2]-0.5*lengths[2]+0.5*grid_size) / grid_size) * grid_size
+    z_max = round((center[2]+0.5*lengths[2]-0.5*grid_size) / grid_size) * grid_size
+    
+    # Create a list of all points in the grid.
+    # See https://stackoverflow.com/a/12891609
+    # The complex numbers cause numpy to go from the min to max values
+    # (inclusive of both) with the number of points equal to the complex
+    # number.
+    X, Y, Z = np.mgrid[x_min:x_max:complex(0, (x_max-x_min)/grid_size+1),
+                       y_min:y_max:complex(0, (y_max-y_min)/grid_size+1),
+                       z_min:z_max:complex(0, (z_max-z_min)/grid_size+1)]
+    positions = np.vstack([X.ravel(), Y.ravel(), Z.ravel()])
+    points_in_box = positions.T
+    
+    all_indices = trimesh.voxel.ops.points_to_indices(points_in_box, pitch=grid_size,
+                                                      origin=[min(points_in_box[:,0]),
+                                                              min(points_in_box[:,1]),
+                                                              min(points_in_box[:,2])])
+    box_voxel = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
+    box_voxel.apply_scale(grid_size)
+    box_voxel = box_voxel.copy()
+    box_voxel.apply_translation([min(points_in_box[:,0]),
+                                 min(points_in_box[:,1]),
+                                 min(points_in_box[:,2])])
+    box_voxel = box_voxel.copy()
+    return box_voxel
 
 
 def check_equal_pitches(voxel_grid_1, voxel_grid_2):

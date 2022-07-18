@@ -70,6 +70,30 @@ direction.  Raises an error if this is not true.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.generate_voxelized_box">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lengths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a voxelized box.</p>
+<p>The function creates a trimesh VoxelGrid box
+based on the input parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lengths</strong> (<em>list-like object containing three floats</em>) – The box’s side lengths in x, y, z directions</p></li>
+<li><p><strong>center</strong> (<em>list-like object containing three floats</em>) – x, y, z coordinates of the sphere’s center.</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em>) – Length of a side of the voxel grid.  0.5 is a reasonable
+choice.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid containing the box.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.generate_voxelized_sphere">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_sphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a voxelized sphere.</p>
@@ -79,7 +103,7 @@ based on the input parameters.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>radius</strong> (<em>float</em>) – Radius of the sphere</p></li>
-<li><p><strong>center</strong> (<em>list-like object</em>) – x, y, z coordinates of the sphere’s center.</p></li>
+<li><p><strong>center</strong> (<em>list-like object containing three floats</em>) – x, y, z coordinates of the sphere’s center.</p></li>
 <li><p><strong>grid_size</strong> (<em>float</em>) – Length of a side of the voxel grid.  0.5 is a reasonable
 choice.</p></li>
 </ul>
@@ -91,11 +115,6 @@ choice.</p></li>
 <dd class="field-odd"><p>trimesh VoxelGrid object</p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>The function creates a spherical triangular mesh then voxelizes it.  Users can also do
-this manually using the trimesh library (instead of using this function).  But this
-isn’t recommended.  Voxelizing a trimesh mesh sphere was observed to give
-larger-than-expected results.  This function compensates for the issue.</p>
 </dd></dl>
 
 <dl class="py function">
