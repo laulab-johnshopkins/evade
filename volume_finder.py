@@ -6,12 +6,54 @@ import pyvista as pv
 import scipy
 
 class AtomGeo:
+    """A surface representation of an atom.
+
+    Parameters
+    ----------
+    mda_atom : MDAnalysis Atom
+        The atom of interest.
+    voxel_sphere : trimesh VoxelGrid
+        The sphere of volume occupied by the atom.  When constructed as
+        part of a ProteinSurface, this will have the radius of a solvent
+        molecule added to it.
+
+    Attributes
+    ----------
+    mda_atom : MDAnalysis Atom
+        The atom that was passed during object construction.
+    voxel_sphere : trimesh VoxelGrid
+        The sphere that was passed during object construction.
+    """
     def __init__(self, mda_atom, voxel_sphere):
         self.mda_atom = mda_atom
         self.voxel_sphere = voxel_sphere
 
 
 class ProteinSurface:
+    """A surface representation of a protein.
+
+    Parameters
+    ----------
+    mda_atomgroup : MDAnalysis Atomgroup
+        All the atoms to be included in the surface.
+    solvent_rad : float, optional
+        The protein surface is constructed from the protein atoms'
+        van der Waals radii plus the radius of a hypothetical solvent molecule.
+        The default value is 1.09 (the van der Waals radius of hydrogen); this was
+        chosen because POVME uses this value.
+    grid_size : float, optional
+        The length (in Angstroms) of each side of a voxel.  The default
+        value is 0.7.
+
+    Attributes
+    ----------
+    surf : trimesh VoxelGrid
+        The surface of the protein.  The interior is filled.
+    mda_atomgroup : MDAnalysis Atomgroup
+        The AtomGroup that was provided during ProteinSurface construction.
+    atom_geo_list : list of AtomGeo objects
+        Contains an AtomGeo for each atom in mda_atomgroup.
+    """
     def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7):
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad # FIXME private?
@@ -69,6 +111,61 @@ class ProteinSurface:
         self.surf = self.surf.copy()
 
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
+
+
+def get_prot_pocket(protein_surf, pocket_surf):
+    """
+    Gets all voxels of the protein that border the pocket.
+    
+    Parameters
+    ----------
+    protein_surf : trimesh VoxelGrid object
+        The protein
+    pocket_surf : trimesh VoxelGrid object
+        The pocket
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A VoxelGrid containing voxels in protein_surf that border protein_surf
+    """
+    dilated_pocket = dilate_voxel_grid(pocket_surf)
+    return voxel_and(protein_surf, dilated_pocket)
+
+
+def dilate_voxel_grid(voxel_grid):
+    """
+    Creates a dilated version of the input shape.
+    
+    The function creates a version of the input shape that has
+    been expanded by 1 grid position in all dimensions.
+    
+    Parameters
+    ----------
+    voxel_grid : trimesh VoxelGrid object
+        The input shape
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        The dilated shape
+    """
+    # The function doesn't know whether the outer edges of
+    # voxel_grid contain any filled points.  If they do,
+    # scipy's binary_dilation won't expand the input matrix's
+    # size to fit the enlarged shape.  This is fixed by adding
+    # an extra row and column to the matrix before dilating.
+    big_array = np.pad(voxel_grid.matrix, pad_width=((1,0), (1,0), (1,0)), constant_values=False)
+    dilated_x_orig = voxel_grid.origin[0] - voxel_grid.scale[0]
+    dilated_y_orig = voxel_grid.origin[1] - voxel_grid.scale[1]
+    dilated_z_orig = voxel_grid.origin[2] - voxel_grid.scale[2]
+    dilated_matrix = scipy.ndimage.binary_dilation(big_array)
+
+    dilated_vg = trimesh.voxel.VoxelGrid(dilated_matrix)
+    dilated_vg.apply_scale(0.5)
+    dilated_vg.apply_translation([dilated_x_orig, dilated_y_orig, dilated_z_orig])
+    dilated_vg = dilated_vg.copy()
+    return dilated_vg
 
 
 def generate_voxelized_sphere(radius, center, grid_size):

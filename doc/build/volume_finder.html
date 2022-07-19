@@ -38,12 +38,92 @@
 <dt class="sig sig-object py" id="volume_finder.AtomGeo">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">AtomGeo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_sphere</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.AtomGeo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A surface representation of an atom.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mda_atom</strong> (<em>MDAnalysis Atom</em>) – The atom of interest.</p></li>
+<li><p><strong>voxel_sphere</strong> (<em>trimesh VoxelGrid</em>) – The sphere of volume occupied by the atom.  When constructed as
+part of a ProteinSurface, this will have the radius of a solvent
+molecule added to it.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.AtomGeo.mda_atom">
+<span class="sig-name descname"><span class="pre">mda_atom</span></span><a class="headerlink" href="#volume_finder.AtomGeo.mda_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>The atom that was passed during object construction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MDAnalysis Atom</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.AtomGeo.voxel_sphere">
+<span class="sig-name descname"><span class="pre">voxel_sphere</span></span><a class="headerlink" href="#volume_finder.AtomGeo.voxel_sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sphere that was passed during object construction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="volume_finder.ProteinSurface">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A surface representation of a protein.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mda_atomgroup</strong> (<em>MDAnalysis Atomgroup</em>) – All the atoms to be included in the surface.</p></li>
+<li><p><strong>solvent_rad</strong> (<em>float</em><em>, </em><em>optional</em>) – The protein surface is constructed from the protein atoms’
+van der Waals radii plus the radius of a hypothetical solvent molecule.
+The default value is 1.09 (the van der Waals radius of hydrogen); this was
+chosen because POVME uses this value.</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The length (in Angstroms) of each side of a voxel.  The default
+value is 0.7.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.ProteinSurface.surf">
+<span class="sig-name descname"><span class="pre">surf</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.surf" title="Permalink to this definition">¶</a></dt>
+<dd><p>The surface of the protein.  The interior is filled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.ProteinSurface.mda_atomgroup">
+<span class="sig-name descname"><span class="pre">mda_atomgroup</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.mda_atomgroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>The AtomGroup that was provided during ProteinSurface construction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MDAnalysis Atomgroup</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.ProteinSurface.atom_geo_list">
+<span class="sig-name descname"><span class="pre">atom_geo_list</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.atom_geo_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains an AtomGeo for each atom in mda_atomgroup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of AtomGeo objects</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -65,6 +145,25 @@ direction.  Raises an error if this is not true.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.dilate_voxel_grid">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">dilate_voxel_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.dilate_voxel_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a dilated version of the input shape.</p>
+<p>The function creates a version of the input shape that has
+been expanded by 1 grid position in all dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>voxel_grid</strong> (<em>trimesh VoxelGrid object</em>) – The input shape</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dilated shape</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
 </dd>
 </dl>
 </dd></dl>
@@ -110,6 +209,26 @@ choice.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A VoxelGrid containing the sphere.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.get_prot_pocket">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_prot_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_prot_pocket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all voxels of the protein that border the pocket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein_surf</strong> (<em>trimesh VoxelGrid object</em>) – The protein</p></li>
+<li><p><strong>pocket_surf</strong> (<em>trimesh VoxelGrid object</em>) – The pocket</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A VoxelGrid containing voxels in protein_surf that border protein_surf</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>trimesh VoxelGrid object</p>
