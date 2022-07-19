@@ -113,6 +113,26 @@ class ProteinSurface:
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
+def write_voxels_to_pdb(voxel_grid, pdb_filename):
+    """
+    Write a VoxelGrid object to a PDB file.
+
+    Each voxel is written as an atom of name "X".  The result can
+    be viewed in PyMOL; users may want to use `set sphere_scale [radius]`
+    where `radius` is 1/2 the voxel grid size.
+    
+    Parameters
+    ----------
+    voxel_grid : trimesh VoxelGrid object
+        The object to be written.
+    pdb_filename : string ending in ".pdb"
+        The file to write.
+    """
+    universe_voxel = mda.Universe.empty(len(voxel_grid.points), trajectory=True)
+    universe_voxel.atoms.positions = voxel_grid.points
+    universe_voxel.atoms.write(pdb_filename)
+
+
 def get_prot_pocket(protein_surf, pocket_surf):
     """
     Gets all voxels of the protein that border the pocket.

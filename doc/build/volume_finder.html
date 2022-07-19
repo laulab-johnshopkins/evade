@@ -333,6 +333,23 @@ voxel_grid_1</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.write_voxels_to_pdb">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">write_voxels_to_pdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.write_voxels_to_pdb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a VoxelGrid object to a PDB file.</p>
+<p>Each voxel is written as an atom of name “X”.  The result can
+be viewed in PyMOL; users may want to use <cite>set sphere_scale [radius]</cite>
+where <cite>radius</cite> is 1/2 the voxel grid size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel_grid</strong> (<em>trimesh VoxelGrid object</em>) – The object to be written.</p></li>
+<li><p><strong>pdb_filename</strong> (<em>string ending in &quot;.pdb&quot;</em>) – The file to write.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
