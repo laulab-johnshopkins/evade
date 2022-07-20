@@ -217,6 +217,28 @@ choice.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.get_pocket_atoms">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all protein atoms that border the pocket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein_surface_obj</strong> (<a class="reference internal" href="#volume_finder.ProteinSurface" title="volume_finder.ProteinSurface"><em>ProteinSurface</em></a>) – The protein molecule.  The object must be
+the ProteinSurface type defined in this software.</p></li>
+<li><p><strong>pocket_surf</strong> (<em>trimesh VoxelGrod</em>) – The pocket.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>list of AtomGeo objects</em> – An AtomGeo for each atom bordering the pocket.</p></li>
+<li><p><em>trimesh VoxelGrid object</em> – A surface containing all atoms bordering the pocket.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.get_prot_pocket">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_prot_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_prot_pocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets all voxels of the protein that border the pocket.</p>

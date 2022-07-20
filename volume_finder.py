@@ -113,6 +113,37 @@ class ProteinSurface:
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
+def get_pocket_atoms(protein_surface_obj, pocket_surf):
+    """
+    Get all protein atoms that border the pocket.
+    
+    Parameters
+    ----------
+    protein_surface_obj : ProteinSurface
+        The protein molecule.  The object must be
+        the ProteinSurface type defined in this software.
+    pocket_surf : trimesh VoxelGrod
+        The pocket.
+
+    Returns
+    -------
+    list of AtomGeo objects
+        An AtomGeo for each atom bordering the pocket.
+    trimesh VoxelGrid object
+        A surface containing all atoms bordering the pocket.
+    """
+    pocket_atoms = []
+    for atom_geo in protein_surface_obj.atom_geo_list:
+        atom_dilated = dilate_voxel_grid(atom_geo.voxel_sphere)
+        atom_pocket_overlap = voxel_and(atom_dilated, pocket_surf)
+        if atom_pocket_overlap:
+            pocket_atoms.append(atom_geo)
+    pocket = pocket_atoms[0].voxel_sphere
+    for atom_geo in pocket_atoms[1:]:
+        pocket = voxel_or(pocket, atom_geo.voxel_sphere)
+    return pocket_atoms, pocket
+
+
 def write_voxels_to_pdb(voxel_grid, pdb_filename):
     """
     Write a VoxelGrid object to a PDB file.
