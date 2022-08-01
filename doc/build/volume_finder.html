@@ -75,7 +75,7 @@ molecule added to it.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="volume_finder.ProteinSurface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_geo_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A surface representation of a protein.</p>
 <dl class="field-list simple">
@@ -150,6 +150,58 @@ direction.  Raises an error if this is not true.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.compare_frames">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pockets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get order parameters that quantify the conformational change between two pockets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>traj_index_big</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume is bigger.</p></li>
+<li><p><strong>traj_index_small</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume is smaller.</p></li>
+<li><p><strong>u</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
+<li><p><strong>prots</strong> (<em>list of ProteinSurface objects</em>) – A ProteinSurface for each frame in frames_for_volumes.</p></li>
+<li><p><strong>pockets</strong> (<em>list of trimesh VoxelGrid objects</em>) – The pocket interior of each frame in frames_for_volumes.</p></li>
+<li><p><strong>volumes</strong> (<em>list of floats</em>) – The volume of each frame in frames_for_volumes.</p></li>
+<li><p><strong>frames_for_volumes</strong> (<em>slice of MDAnalysis trajectory</em>) – The frames that prots, pockets, and volumes contain.
+E.g. u.trajectory[0:50]</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em>) – The size of the voxel grid that the calculations use.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Each keys is a pair of atom indices for the MDAnalysis universe.  Each value is
+a list of residue-residue distances between the two atoms for each frame in frames_for_volumes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dictionary mapping tuples of 2 ints to lists of floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.compare_prots">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_prots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_prots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays two voxelized proteins in a Jupyter notebook.</p>
+<p>Uses PyVista to show two proteins.  They are shown together,
+and each protein is shown separately.
+The protein and pocket are shown as being hollow; i.e. if
+users zoom past the surface they’ll see the inside of the shape.
+The rest of the software package uses filled shapes, but this
+function displays them as hollow to decrease lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein_surface_1</strong> (<em>ProteinSurface object</em>) – One of the proteins to be displayed.</p></li>
+<li><p><strong>protein_surface_2</strong> (<em>ProteinSurface object</em>) – The other protein to be displayed.</p></li>
+<li><p><strong>color_1</strong> (<em>string</em><em>, </em><em>optional</em>) – The color of the first protein.  The default value is “red”.</p></li>
+<li><p><strong>sel_regions_1</strong> (<em>dictionary mapping MDAnalysis AtomGroups to strings</em>) – The colors for selected regions of the first protein.</p></li>
+<li><p><strong>color_2</strong> (<em>string</em><em>, </em><em>optional</em>) – The color of the second protein.  The default value is “blue”.</p></li>
+<li><p><strong>sel_regions_2</strong> (<em>dictionary mapping MDAnalysis AtomGroups to strings</em>) – The colors for selected regions of the second protein.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.dilate_voxel_grid">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">dilate_voxel_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.dilate_voxel_grid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a dilated version of the input shape.</p>
@@ -218,7 +270,7 @@ choice.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.get_pocket_atoms">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all protein atoms that border the pocket.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -231,7 +283,7 @@ the ProteinSurface type defined in this software.</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>list of AtomGeo objects</em> – An AtomGeo for each atom bordering the pocket.</p></li>
-<li><p><em>trimesh VoxelGrid object</em> – A surface containing all atoms bordering the pocket.</p></li>
+<li><p><em>ProteinSurface object</em> – A surface containing all atoms bordering the pocket.</p></li>
 </ul>
 </p>
 </dd>

@@ -4,6 +4,7 @@ import MDAnalysis as mda
 import trimesh
 import pyvista as pv
 import scipy
+import scipy.stats
 
 class AtomGeo:
     """A surface representation of an atom.
@@ -54,7 +55,7 @@ class ProteinSurface:
     atom_geo_list : list of AtomGeo objects
         Contains an AtomGeo for each atom in mda_atomgroup.
     """
-    def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7):
+    def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7, surf=None, atom_geo_list=None):
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad # FIXME private?
         
@@ -72,7 +73,15 @@ class ProteinSurface:
         min_x = next_voxel.origin[0]
         min_y = next_voxel.origin[1]
         min_z = next_voxel.origin[2]
+        if surf:
+            self.surf = surf
+            self.atom_geo_list = atom_geo_list
+            self.dict_mda_index_to_atom_geo = {}
+            for atom_geo in atom_geo_list:
+                self.dict_mda_index_to_atom_geo[atom_geo.mda_atom.index] = atom_geo
+            return
         self.atom_geo_list = []
+        self.dict_mda_index_to_atom_geo = {}
         for atom in self.mda_atomgroup[1:]:
             try:
                 element = atom.element
@@ -97,7 +106,9 @@ class ProteinSurface:
             min_x = min(min_x, next_voxel.origin[0])
             min_y = min(min_y, next_voxel.origin[1])
             min_z = min(min_z, next_voxel.origin[2])
-            self.atom_geo_list.append(AtomGeo(atom, next_voxel))
+            new_atom_geo = AtomGeo(atom, next_voxel)
+            self.atom_geo_list.append(new_atom_geo)
+            self.dict_mda_index_to_atom_geo[atom.index] = new_atom_geo
         all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size, origin=[min_x,min_y,min_z])
         self.surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
         
@@ -113,7 +124,168 @@ class ProteinSurface:
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
-def get_pocket_atoms(protein_surface_obj, pocket_surf):
+def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes, frames_for_volumes, grid_size):
+    """
+    Get order parameters that quantify the conformational change between two pockets.
+    
+    Parameters
+    ----------
+    traj_index_big : int
+        The frame number (0-indexed) of the selected frame where the pocket volume is bigger.
+    traj_index_small : int
+        The frame number (0-indexed) of the selected frame where the pocket volume is smaller.
+    u : MDAnalysis universe
+        The universe object that the data are taken from.
+    prots : list of ProteinSurface objects
+        A ProteinSurface for each frame in frames_for_volumes.
+    pockets : list of trimesh VoxelGrid objects
+        The pocket interior of each frame in frames_for_volumes.
+    volumes : list of floats
+        The volume of each frame in frames_for_volumes.
+    frames_for_volumes : slice of MDAnalysis trajectory
+        The frames that prots, pockets, and volumes contain.
+        E.g. u.trajectory[0:50]
+    grid_size : float
+        The size of the voxel grid that the calculations use.
+
+    Returns
+    -------
+    dictionary mapping tuples of 2 ints to lists of floats
+        Each keys is a pair of atom indices for the MDAnalysis universe.  Each value is
+        a list of residue-residue distances between the two atoms for each frame in frames_for_volumes.
+    """
+
+    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(prots[traj_index_big], pockets[traj_index_big], u, solvent_rad=1.09, grid_size=grid_size)
+    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(prots[traj_index_small], pockets[traj_index_small], u, solvent_rad=1.09, grid_size=grid_size)
+    
+    pocket_big_mda_indices = []
+    for atom in pocket_atoms_frame_big:
+        pocket_big_mda_indices.append(atom.mda_atom.index)
+
+    pocket_small_mda_indices = []
+    for atom in pocket_atoms_frame_small:
+        pocket_small_mda_indices.append(atom.mda_atom.index)
+    
+    # Find out how much each atom moved between the two frames of interest.  This will
+    # be used to choose atoms that are unusually mobile or stationary.
+    indices_in_either_pocket = list(set(pocket_big_mda_indices + pocket_small_mda_indices))
+    dict_index_to_dist = {}
+    for atom_index in indices_in_either_pocket:
+        u.trajectory[traj_index_big]
+        frame_a_pos = u.atoms[atom_index].position
+        u.trajectory[traj_index_small]
+        frame_b_pos = u.atoms[atom_index].position
+        dist = math.dist(frame_a_pos, frame_b_pos)
+        dict_index_to_dist[atom_index] = dist
+        
+    # Find all atoms that moved more/less than most others.
+    dist_array = np.array(list(dict_index_to_dist.values()))
+    mean_dist = np.mean(dist_array)
+    std_dist = np.std(dist_array)
+    outlier_indices = []
+    print("mean and std dist", mean_dist, std_dist)
+    for index, dist in dict_index_to_dist.items():
+        if (dist > (mean_dist + std_dist)) or (dist < (mean_dist - 0.5*std_dist)):
+            print("outlier", index, dist, u.atoms[index].resid)
+            outlier_indices.append(index)
+            
+    # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.
+    pocket_small_edge = get_prot_pocket(prots[traj_index_small].surf, pockets[traj_index_small])
+    dict_index_to_pocket_voxels = {}
+    for index in outlier_indices:
+        atom_sphere = prots[traj_index_small].dict_mda_index_to_atom_geo[index].voxel_sphere
+        this_atom_pocket_contribution = voxel_and(pocket_small_edge, atom_sphere)
+        if this_atom_pocket_contribution:
+            this_atom_num_surface_voxels = this_atom_pocket_contribution.filled_count
+            print(index, dict_index_to_dist[index], u.atoms[index].resid, this_atom_num_surface_voxels)
+            dict_index_to_pocket_voxels[index] = this_atom_num_surface_voxels
+    # Choose atoms with relatively high exposed surface area.
+    voxel_count_array = np.array(list(dict_index_to_pocket_voxels.values()))
+    mean_voxel_count = np.mean(voxel_count_array)
+    std_voxel_count = np.std(voxel_count_array)
+    print(mean_voxel_count, std_voxel_count)
+    key_moving_indices = []
+    key_stationary_indices = []
+    for index, voxel_count in dict_index_to_pocket_voxels.items():
+        if voxel_count > mean_voxel_count:
+            print("high voxel count", index, dict_index_to_dist[index], u.atoms[index].resid,
+                  u.atoms[index].name, voxel_count)
+            if dict_index_to_dist[index] > mean_dist:
+                key_moving_indices.append(index)
+            else:
+                key_stationary_indices.append(index)
+    # Iterate over pairs of atoms chosen above.  For each pair, find the distance
+    # between atoms in both frames of interest.  Use this to get the "relative difference"
+    # of how much the distance changes between the two frames.
+    dict_index_pair_to_rel_op_dist = {}
+    for moving_index in key_moving_indices:
+        for stationary_index in key_stationary_indices:
+            u.trajectory[traj_index_big]
+            op_dist_frame_big = math.dist(u.atoms[moving_index].position,
+                                        u.atoms[stationary_index].position)
+            u.trajectory[traj_index_small]
+            op_dist_frame_small = math.dist(u.atoms[moving_index].position,
+                                        u.atoms[stationary_index].position)
+            # abs(x-y) / ((x+y)/2) = abs(x-y) / mean_value.
+            # See https://en.wikipedia.org/wiki/Relative_change_and_difference
+            rel_diff = abs(op_dist_frame_big - op_dist_frame_small) / ((op_dist_frame_big + op_dist_frame_small) / 2)
+            dict_index_pair_to_rel_op_dist[(moving_index, stationary_index)] = rel_diff
+        for other_moving_index in key_moving_indices:
+            if other_moving_index > moving_index: # The > avoids double-counting.
+                u.trajectory[traj_index_big]
+                op_dist_frame_big = math.dist(u.atoms[moving_index].position,
+                                            u.atoms[other_moving_index].position)
+                u.trajectory[traj_index_small]
+                op_dist_frame_small = math.dist(u.atoms[moving_index].position,
+                                            u.atoms[other_moving_index].position)
+                # abs(x-y) / ((x+y)/2) = abs(x-y) / mean_value.
+                # See https://en.wikipedia.org/wiki/Relative_change_and_difference
+                rel_diff = abs(op_dist_frame_big - op_dist_frame_small) / ((op_dist_frame_big + op_dist_frame_small) / 2)
+                dict_index_pair_to_rel_op_dist[(moving_index, other_moving_index)] = rel_diff
+                
+    # Choose distances whose relative difference between the two frames is high.  For each of these
+    # distances, calculate the distance for every frame in the trajectory.  Find the correlation between
+    # the distance and pocket volume.
+    rel_op_dist_array = np.array(list(dict_index_pair_to_rel_op_dist.values()))
+    mean_rel_op_dist = np.mean(rel_op_dist_array)
+    std_rel_op_dist = np.std(rel_op_dist_array)
+    dict_index_pair_to_pearson_r = {}
+    dict_index_pair_to_pearson_pval = {}
+    dict_index_pair_to_dist_list = {}
+    for index_pair, rel_op_dist in dict_index_pair_to_rel_op_dist.items():
+        index_big = index_pair[0]
+        index_small = index_pair[1]
+        if rel_op_dist > (mean_rel_op_dist + std_rel_op_dist):
+            dist_list = []
+            for frame in frames_for_volumes:
+                op_dist_this_frame = math.dist(u.atoms[index_big].position,
+                                               u.atoms[index_small].position)
+                dist_list.append(op_dist_this_frame)
+            pearson_r, p_value = scipy.stats.pearsonr(dist_list, volumes)
+            dict_index_pair_to_pearson_r[index_pair] = pearson_r
+            dict_index_pair_to_pearson_pval[index_pair] = p_value
+            dict_index_pair_to_dist_list[index_pair] = dist_list
+            
+    # Print the results sorted by Pearson r between atom-atom distance and pocket volume.
+    list_of_pearson_r_and_index_pair_tuples = [(r, inds) for inds, r in dict_index_pair_to_pearson_r.items()]
+    list_of_pearson_r_and_index_pair_tuples.sort(reverse=True)
+    for pearson_r, index_pair in list_of_pearson_r_and_index_pair_tuples:
+        index_big = index_pair[0]
+        index_small = index_pair[1]
+        p_value = dict_index_pair_to_pearson_pval[index_pair]
+        rel_op_dist = dict_index_pair_to_rel_op_dist[index_pair]
+        print()
+        print("Atom 1:", u.atoms[index_big].name, u.atoms[index_big].resid)
+        print("Atom 2:", u.atoms[index_small].name, u.atoms[index_small].resid)
+        print("index pair:", index_pair)
+        print("Pearson r between atom-atom distance and pocket volume:", pearson_r)
+        print("p-value for Pearson:", p_value)
+        print("Relative change in distance between two frames of interest:", rel_op_dist)
+        
+    return dict_index_pair_to_dist_list
+
+
+def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.4, grid_size=0.7):
     """
     Get all protein atoms that border the pocket.
     
@@ -129,7 +301,7 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf):
     -------
     list of AtomGeo objects
         An AtomGeo for each atom bordering the pocket.
-    trimesh VoxelGrid object
+    ProteinSurface object
         A surface containing all atoms bordering the pocket.
     """
     pocket_atoms = []
@@ -139,9 +311,17 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf):
         if atom_pocket_overlap:
             pocket_atoms.append(atom_geo)
     pocket = pocket_atoms[0].voxel_sphere
+    indices = [pocket_atoms[0].mda_atom.index]
+    atom_geo_list = []
     for atom_geo in pocket_atoms[1:]:
         pocket = voxel_or(pocket, atom_geo.voxel_sphere)
-    return pocket_atoms, pocket
+        indices.append(atom_geo.mda_atom.index)
+        atom_geo_list.append(atom_geo)
+    indices_string = " ".join(str(index) for index in indices)
+    sel_str = "index %s" %(indices_string)
+    mda_atomgroup = universe.select_atoms(sel_str)
+    pocket_surf = ProteinSurface(mda_atomgroup, surf=pocket, atom_geo_list=atom_geo_list)
+    return pocket_atoms, pocket_surf
 
 
 def write_voxels_to_pdb(voxel_grid, pdb_filename):
@@ -504,6 +684,111 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     vox_1_and_2_voxel_grid.apply_translation([min_x, min_y, min_z])
     vox_1_and_2_voxel_grid = vox_1_and_2_voxel_grid.copy()
     return vox_1_and_2_voxel_grid
+
+
+def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regions_1=None,
+                  color_2="blue", sel_regions_2=None):
+    """Displays two voxelized proteins in a Jupyter notebook.
+    
+    Uses PyVista to show two proteins.  They are shown together,
+    and each protein is shown separately.
+    The protein and pocket are shown as being hollow; i.e. if
+    users zoom past the surface they'll see the inside of the shape.
+    The rest of the software package uses filled shapes, but this
+    function displays them as hollow to decrease lag.
+    
+    Parameters
+    ----------
+    protein_surface_1 : ProteinSurface object
+        One of the proteins to be displayed.
+    protein_surface_2 : ProteinSurface object
+        The other protein to be displayed.
+    color_1 : string, optional
+        The color of the first protein.  The default value is "red".
+    sel_regions_1 : dictionary mapping MDAnalysis AtomGroups to strings
+        The colors for selected regions of the first protein.
+    color_2 : string, optional
+        The color of the second protein.  The default value is "blue".
+    sel_regions_2 : dictionary mapping MDAnalysis AtomGroups to strings
+        The colors for selected regions of the second protein.
+    """ 
+
+    dict_sel_1_shape_to_color = {}
+    non_sel_1_region = protein_surface_1.surf
+    if sel_regions_1:
+        for sel_region_mda, sel_color in sel_regions_1.items():
+            sel_region = None # initialization
+            for selected_atom in sel_region_mda:
+                sel_atom_geo = protein_surface_1.dict_mda_index_to_atom_geo[selected_atom.index]
+                if sel_region:
+                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                else:
+                    sel_region = sel_atom_geo.voxel_sphere
+            non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
+            dict_sel_1_shape_to_color[sel_region] = sel_color
+        
+    dict_sel_2_shape_to_color = {}
+    non_sel_2_region = protein_surface_2.surf
+    if sel_regions_2:
+        for sel_region_mda, sel_color in sel_regions_2.items():
+            sel_region = None # initialization
+            for selected_atom in sel_region_mda:
+                sel_atom_geo = protein_surface_2.dict_mda_index_to_atom_geo[selected_atom.index]
+                if sel_region:
+                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                else:
+                    sel_region = sel_atom_geo.voxel_sphere
+            non_sel_2_region = voxel_subtract(non_sel_2_region, sel_region)
+            dict_sel_2_shape_to_color[sel_region] = sel_color
+    
+    non_sel_1_vox = non_sel_1_region.copy()
+    non_sel_1_vox.hollow()
+    non_sel_1_trimesh = non_sel_1_vox.as_boxes()
+    non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
+    
+    non_sel_2_vox = non_sel_2_region.copy()
+    non_sel_2_vox.hollow()
+    non_sel_2_trimesh = non_sel_2_vox.as_boxes()
+    non_sel_2_pv = pv.wrap(non_sel_2_trimesh)
+    
+    pl = pv.Plotter(shape=(2,2))
+    pl.add_mesh(non_sel_1_pv, color=color_1)
+    if sel_regions_1:
+        for sel_region, color in dict_sel_1_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.add_mesh(non_sel_2_pv, color=color_2)
+    if sel_regions_2:
+        for sel_region, color in dict_sel_2_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.subplot(0,1)
+    pl.add_mesh(non_sel_1_pv, color=color_1)
+    if sel_regions_1:
+        for sel_region, color in dict_sel_1_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.subplot(1,0)
+    pl.add_mesh(non_sel_2_pv, color=color_2)
+    if sel_regions_2:
+        for sel_region, color in dict_sel_2_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.link_views()
+    pl.show()
+
 
 def show_pocket(prot_vox, pocket_vox):
     """Displays a protein and its pocket in a Jupyter notebook.
