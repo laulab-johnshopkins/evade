@@ -151,7 +151,7 @@ direction.  Raises an error if this is not true.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.compare_frames">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pockets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pockets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get order parameters that quantify the conformational change between two pockets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -164,7 +164,6 @@ direction.  Raises an error if this is not true.</p>
 <li><p><strong>volumes</strong> (<em>list of floats</em>) – The volume of each frame in frames_for_volumes.</p></li>
 <li><p><strong>frames_for_volumes</strong> (<em>slice of MDAnalysis trajectory</em>) – The frames that prots, pockets, and volumes contain.
 E.g. u.trajectory[0:50]</p></li>
-<li><p><strong>grid_size</strong> (<em>float</em>) – The size of the voxel grid that the calculations use.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -196,6 +195,24 @@ function displays them as hollow to decrease lag.</p>
 <li><p><strong>sel_regions_1</strong> (<em>dictionary mapping MDAnalysis AtomGroups to strings</em>) – The colors for selected regions of the first protein.</p></li>
 <li><p><strong>color_2</strong> (<em>string</em><em>, </em><em>optional</em>) – The color of the second protein.  The default value is “blue”.</p></li>
 <li><p><strong>sel_regions_2</strong> (<em>dictionary mapping MDAnalysis AtomGroups to strings</em>) – The colors for selected regions of the second protein.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.correlate_pockets">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">correlate_pockets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dists_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dists_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_print</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.correlate_pockets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find correlated order parameters between 2 proteins.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dists_1</strong> (<em>dictionary</em>) – This is a dictionary mapping tuples of 2 ints to lists of floats.  It maps two atom indices
+to a list of the distances between these atoms for each frame.  It is the output of compare_frames.</p></li>
+<li><p><strong>dists_2</strong> (<em>dictionary</em>) – This has the same format as dists_1 (i.e. the output of compare_frames).  It stores the distances for the
+other pocket to be compared.</p></li>
+<li><p><strong>num_print</strong> (<em>int</em>) – This controls how many order-parameter pairs are printed.  The function prints the num_print pairs with the
+highest correlations, and the num_print pairs with the lowest correlations.</p></li>
 </ul>
 </dd>
 </dl>

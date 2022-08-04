@@ -124,7 +124,42 @@ class ProteinSurface:
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
-def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes, frames_for_volumes, grid_size):
+def correlate_pockets(dists_1, dists_2, num_print):
+    """
+    Find correlated order parameters between 2 proteins.
+    
+    Parameters
+    ----------
+    dists_1 : dictionary
+        This is a dictionary mapping tuples of 2 ints to lists of floats.  It maps two atom indices
+        to a list of the distances between these atoms for each frame.  It is the output of compare_frames.
+    dists_2 : dictionary
+        This has the same format as dists_1 (i.e. the output of compare_frames).  It stores the distances for the
+        other pocket to be compared.
+    num_print : int
+        This controls how many order-parameter pairs are printed.  The function prints the num_print pairs with the
+        highest correlations, and the num_print pairs with the lowest correlations.
+    """
+    dict_index_pairs_to_pearson_r = {}
+    dict_index_pairs_to_pval = {}
+    for pair_1, dist_list_1 in dists_1.items():
+        for pair_2, dist_list_2 in dists_2.items():
+            pearson, pval = scipy.stats.pearsonr(dist_list_1, dist_list_2)
+            dict_index_pairs_to_pearson_r[(pair_1, pair_2)] = pearson
+            dict_index_pairs_to_pval[(pair_1, pair_2)] = pval
+    list_of_pearson_and_indices_tuples = [(r, inds) for inds, r in dict_index_pairs_to_pearson_r.items()]
+    list_of_pearson_and_indices_tuples.sort()
+    stop_index = int(min(len(list_of_pearson_and_indices_tuples)/2, num_print))
+    for pearson_r, indices in list_of_pearson_and_indices_tuples[0:stop_index]:
+        p_value = dict_index_pairs_to_pval[indices]
+        print(pearson_r, p_value, indices)
+    start_index = int(max(-len(list_of_pearson_and_indices_tuples)/2, -num_print))
+    for pearson_r, indices in list_of_pearson_and_indices_tuples[start_index:]:
+        p_value = dict_index_pairs_to_pval[indices]
+        print(pearson_r, p_value, indices)
+
+
+def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes, frames_for_volumes):
     """
     Get order parameters that quantify the conformational change between two pockets.
     
@@ -145,8 +180,6 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
     frames_for_volumes : slice of MDAnalysis trajectory
         The frames that prots, pockets, and volumes contain.
         E.g. u.trajectory[0:50]
-    grid_size : float
-        The size of the voxel grid that the calculations use.
 
     Returns
     -------
@@ -154,6 +187,9 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
         Each keys is a pair of atom indices for the MDAnalysis universe.  Each value is
         a list of residue-residue distances between the two atoms for each frame in frames_for_volumes.
     """
+
+    check_equal_pitches(prots[0].surf, pockets[0])
+    grid_size = prots[0].surf.pitch[0]
 
     pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(prots[traj_index_big], pockets[traj_index_big], u, solvent_rad=1.09, grid_size=grid_size)
     pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(prots[traj_index_small], pockets[traj_index_small], u, solvent_rad=1.09, grid_size=grid_size)
@@ -543,6 +579,7 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
         raise ValueError("voxel_grid_2.pitch values not uniform")
     if not (voxel_grid_1.pitch == voxel_grid_2.pitch).all():
         raise ValueError("input VoxelGrid objects have different pitches")
+    return True
 
 
 def voxel_subtract(voxel_grid_1, voxel_grid_2):
