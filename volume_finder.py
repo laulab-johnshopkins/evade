@@ -3,6 +3,8 @@ import numpy as np
 import MDAnalysis as mda
 import trimesh
 import pyvista as pv
+import pandas as pd
+import numpy_indexed as npi
 import scipy
 import scipy.stats
 
@@ -68,8 +70,21 @@ class ProteinSurface:
             element = mda.topology.guessers.guess_atom_element(atom.type)
         vdw_rad = vdw_rads[element]
         sphere_rad = vdw_rad + solvent_rad
-        next_voxel = generate_voxelized_sphere(sphere_rad, atom.position, grid_size)
-        voxel_points =list(next_voxel.points)
+        next_voxel = generate_voxelized_sphere(sphere_rad,
+                                                             atom.position, grid_size)
+        num_atoms = len(mda_atomgroup)
+        max_atom_rad = max(vdw_rads.values()) + solvent_rad
+        max_sphere = generate_voxelized_sphere(max_atom_rad,
+                                                             [0,0,0], grid_size)
+        # The 1.5 prevents imprecision from causing issues
+        max_atom_points = int(max_sphere.points.shape[0] * num_atoms * 1.5)
+        voxel_points = np.empty(shape=(max_atom_points,3), dtype=np.float64)
+        start_index = 0
+        end_index = start_index + len(next_voxel.points)
+        num_atoms = 0
+        voxel_points[start_index:end_index] = next_voxel.points
+        num_atoms += 1
+        start_index = end_index
         min_x = next_voxel.origin[0]
         min_y = next_voxel.origin[1]
         min_z = next_voxel.origin[2]
@@ -102,13 +117,20 @@ class ProteinSurface:
 
             next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y, approx_trans_z]))
             next_voxel = next_voxel.copy()
-            voxel_points += list(next_voxel.points)
+            
+            end_index = start_index + next_voxel.filled_count
+            
+            voxel_points[start_index:end_index] = next_voxel.points
+            start_index = end_index
+            num_atoms += 1
+
             min_x = min(min_x, next_voxel.origin[0])
             min_y = min(min_y, next_voxel.origin[1])
             min_z = min(min_z, next_voxel.origin[2])
             new_atom_geo = AtomGeo(atom, next_voxel)
             self.atom_geo_list.append(new_atom_geo)
             self.dict_mda_index_to_atom_geo[atom.index] = new_atom_geo
+        voxel_points = voxel_points[0:end_index]
         all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size, origin=[min_x,min_y,min_z])
         self.surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
         
@@ -116,59 +138,80 @@ class ProteinSurface:
         # is [0,0,0].  The next few lines fix this.
         self.surf.apply_scale(grid_size)
         self.surf = self.surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
-        self.surf.apply_translation([min(np.array(voxel_points)[:,0]), min(np.array(voxel_points)[:,1]), min(np.array(voxel_points)[:,2])])
+        self.surf.apply_translation([min(voxel_points[:,0]), min(voxel_points[:,1]), min(voxel_points[:,2])])
         self.surf = self.surf.copy()
         self.surf.fill()
         self.surf = self.surf.copy()
 
+
+
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
-def correlate_pockets(dists_1, dists_2, num_print):
+def correlate_pockets(df_1, df_2):
     """
     Find correlated order parameters between 2 proteins.
     
     Parameters
     ----------
-    dists_1 : dictionary
-        This is a dictionary mapping tuples of 2 ints to lists of floats.  It maps two atom indices
-        to a list of the distances between these atoms for each frame.  It is the output of compare_frames.
-    dists_2 : dictionary
-        This has the same format as dists_1 (i.e. the output of compare_frames).  It stores the distances for the
-        other pocket to be compared.
-    num_print : int
-        This controls how many order-parameter pairs are printed.  The function prints the num_print pairs with the
-        highest correlations, and the num_print pairs with the lowest correlations.
+    df_1 : Pandas DataFrame
+        This should be the output of compare_frames for one of the pockets of interest.
+    df_2 : Pandas DataFrame
+        This should be the output of compare_frames for the other pocket of interest.
+
+    Returns
+    -------
+    Pandas DataFrame
+        A DataFrame with information about each pair of order parameters examined by the
+        software.
     """
-    dict_index_pairs_to_pearson_r = {}
-    dict_index_pairs_to_pval = {}
-    for pair_1, dist_list_1 in dists_1.items():
-        for pair_2, dist_list_2 in dists_2.items():
-            pearson, pval = scipy.stats.pearsonr(dist_list_1, dist_list_2)
-            dict_index_pairs_to_pearson_r[(pair_1, pair_2)] = pearson
-            dict_index_pairs_to_pval[(pair_1, pair_2)] = pval
-    list_of_pearson_and_indices_tuples = [(r, inds) for inds, r in dict_index_pairs_to_pearson_r.items()]
-    list_of_pearson_and_indices_tuples.sort()
-    stop_index = int(min(len(list_of_pearson_and_indices_tuples)/2, num_print))
-    for pearson_r, indices in list_of_pearson_and_indices_tuples[0:stop_index]:
-        p_value = dict_index_pairs_to_pval[indices]
-        print(pearson_r, p_value, indices)
-    start_index = int(max(-len(list_of_pearson_and_indices_tuples)/2, -num_print))
-    for pearson_r, indices in list_of_pearson_and_indices_tuples[start_index:]:
-        p_value = dict_index_pairs_to_pval[indices]
-        print(pearson_r, p_value, indices)
+    
+    output_df_as_list = []
+    for index_1, row_1 in df_1.iterrows():
+        for index_2, row_2 in df_2.iterrows():
+            pearson, pval = scipy.stats.pearsonr(row_1["Distances"], row_2["Distances"])
+            row_1_as_list = row_1.values.tolist()
+            row_2_as_list = row_2.values.tolist()
+            row_of_output_df = row_1_as_list + row_2_as_list + [pearson, pval]
+            output_df_as_list.append(row_of_output_df)
+    df = pd.DataFrame(output_df_as_list, columns =["Pocket 1 Atom 1 index",
+                                                   "Pocket 1 Atom 2 index",
+                                                   "Pocket 1 Pearson of dists",
+                                                   "Pocket 1 p-value for Pearson",
+                                                   "Pocket 1 Atom 1 name",
+                                                   "Pocket 1 Atom 1 residue",
+                                                   "Pocket 1 Atom 2 name",
+                                                   "Pocket 1 Atom 2 residue",
+                                                   "Pocket 1 Rel. change in dist.",
+                                                   "Pocket 1 Distances",
+                                                   "Pocket 2 Atom 1 index",
+                                                   "Pocket 2 Atom 2 index",
+                                                   "Pocket 2 Pearson of dists",
+                                                   "Pocket 2 p-value for Pearson",
+                                                   "Pocket 2 Atom 1 name",
+                                                   "Pocket 2 Atom 1 residue",
+                                                   "Pocket 2 Atom 2 name",
+                                                   "Pocket 2 Atom 2 residue",
+                                                   "Pocket 2 Rel. change in dist.",
+                                                   "Pocket 2 Distances",
+                                                   "Pearson between dists",
+                                                   "p-value for pearson between lists"])
+    return df
 
 
-def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes, frames_for_volumes):
+def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
+                   frames_for_volumes):
     """
     Get order parameters that quantify the conformational change between two pockets.
     
     Parameters
     ----------
     traj_index_big : int
-        The frame number (0-indexed) of the selected frame where the pocket volume is bigger.
+        The frame number (0-indexed) of the selected frame where the pocket volume
+        is bigger.
     traj_index_small : int
-        The frame number (0-indexed) of the selected frame where the pocket volume is smaller.
+        The frame number (0-indexed) of the selected frame where the pocket volume
+        is smaller.
     u : MDAnalysis universe
         The universe object that the data are taken from.
     prots : list of ProteinSurface objects
@@ -183,9 +226,9 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
 
     Returns
     -------
-    dictionary mapping tuples of 2 ints to lists of floats
-        Each keys is a pair of atom indices for the MDAnalysis universe.  Each value is
-        a list of residue-residue distances between the two atoms for each frame in frames_for_volumes.
+    Pandas DataFrame
+        A DataFrame with information about each order parameter examined by the
+        software.
     """
 
     check_equal_pitches(prots[0].surf, pockets[0])
@@ -285,40 +328,32 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
     rel_op_dist_array = np.array(list(dict_index_pair_to_rel_op_dist.values()))
     mean_rel_op_dist = np.mean(rel_op_dist_array)
     std_rel_op_dist = np.std(rel_op_dist_array)
-    dict_index_pair_to_pearson_r = {}
-    dict_index_pair_to_pearson_pval = {}
-    dict_index_pair_to_dist_list = {}
+    output_df_as_list = []
     for index_pair, rel_op_dist in dict_index_pair_to_rel_op_dist.items():
-        index_big = index_pair[0]
-        index_small = index_pair[1]
+        index_a = index_pair[0]
+        index_b = index_pair[1]
         if rel_op_dist > (mean_rel_op_dist + std_rel_op_dist):
             dist_list = []
             for frame in frames_for_volumes:
-                op_dist_this_frame = math.dist(u.atoms[index_big].position,
-                                               u.atoms[index_small].position)
+                op_dist_this_frame = math.dist(u.atoms[index_a].position,
+                                               u.atoms[index_b].position)
                 dist_list.append(op_dist_this_frame)
             pearson_r, p_value = scipy.stats.pearsonr(dist_list, volumes)
-            dict_index_pair_to_pearson_r[index_pair] = pearson_r
-            dict_index_pair_to_pearson_pval[index_pair] = p_value
-            dict_index_pair_to_dist_list[index_pair] = dist_list
             
-    # Print the results sorted by Pearson r between atom-atom distance and pocket volume.
-    list_of_pearson_r_and_index_pair_tuples = [(r, inds) for inds, r in dict_index_pair_to_pearson_r.items()]
-    list_of_pearson_r_and_index_pair_tuples.sort(reverse=True)
-    for pearson_r, index_pair in list_of_pearson_r_and_index_pair_tuples:
-        index_big = index_pair[0]
-        index_small = index_pair[1]
-        p_value = dict_index_pair_to_pearson_pval[index_pair]
-        rel_op_dist = dict_index_pair_to_rel_op_dist[index_pair]
-        print()
-        print("Atom 1:", u.atoms[index_big].name, u.atoms[index_big].resid)
-        print("Atom 2:", u.atoms[index_small].name, u.atoms[index_small].resid)
-        print("index pair:", index_pair)
-        print("Pearson r between atom-atom distance and pocket volume:", pearson_r)
-        print("p-value for Pearson:", p_value)
-        print("Relative change in distance between two frames of interest:", rel_op_dist)
-        
-    return dict_index_pair_to_dist_list
+            row_of_df_as_list = [index_a, index_b, pearson_r, p_value,
+                                 u.atoms[index_a].name, u.atoms[index_a].resid,
+                                 u.atoms[index_b].name, u.atoms[index_b].resid,
+                                 rel_op_dist, dist_list]
+            output_df_as_list.append(row_of_df_as_list)
+
+    df = pd.DataFrame(output_df_as_list, columns =["Atom 1 index", "Atom 2 index",
+                                                   "Pearson of dists",
+                                                   "p-value for Pearson",
+                                                   "Atom 1 name", "Atom 1 residue",
+                                                   "Atom 2 name", "Atom 2 residue",
+                                                   "Rel. change in dist.", "Distances"])
+
+    return df
 
 
 def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.4, grid_size=0.7):
@@ -440,7 +475,8 @@ def generate_voxelized_sphere(radius, center, grid_size):
     Creates a voxelized sphere.
     
     The function creates a trimesh VoxelGrid sphere
-    based on the input parameters.
+    based on the input parameters.  The sphere is filled;
+    i.e. internal points are occupied.
     
     Parameters
     ----------
@@ -499,7 +535,8 @@ def generate_voxelized_box(lengths, center, grid_size):
     Creates a voxelized box.
     
     The function creates a trimesh VoxelGrid box
-    based on the input parameters.
+    based on the input parameters.  The box is filled; i.e.
+    internal points are occupied.
     
     Parameters
     ----------
@@ -697,17 +734,10 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
-    # Check which points from voxel_grid_1 are in voxel_grid_2.
-    vox_1_and_2_points = [] # initialization
-    # FIXME decimal place is magic number
-    vox_2_points = set(tuple(point) for point in voxel_grid_2.points.round(decimals=5).tolist())
-    for point in voxel_grid_1.points.round(decimals=5).tolist():
-        if tuple(point) in vox_2_points:
-            vox_1_and_2_points.append(point)
+    vox_1_and_2_points = npi.intersection(voxel_grid_1.points, voxel_grid_2.points)
 
     if len(vox_1_and_2_points) == 0:
         return None
-    vox_1_and_2_points = np.array(vox_1_and_2_points)
     min_x = min(vox_1_and_2_points[:,0])
     min_y = min(vox_1_and_2_points[:,1])
     min_z = min(vox_1_and_2_points[:,2])

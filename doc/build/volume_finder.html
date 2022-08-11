@@ -156,8 +156,10 @@ direction.  Raises an error if this is not true.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>traj_index_big</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume is bigger.</p></li>
-<li><p><strong>traj_index_small</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume is smaller.</p></li>
+<li><p><strong>traj_index_big</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume
+is bigger.</p></li>
+<li><p><strong>traj_index_small</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume
+is smaller.</p></li>
 <li><p><strong>u</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
 <li><p><strong>prots</strong> (<em>list of ProteinSurface objects</em>) – A ProteinSurface for each frame in frames_for_volumes.</p></li>
 <li><p><strong>pockets</strong> (<em>list of trimesh VoxelGrid objects</em>) – The pocket interior of each frame in frames_for_volumes.</p></li>
@@ -167,11 +169,11 @@ E.g. u.trajectory[0:50]</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Each keys is a pair of atom indices for the MDAnalysis universe.  Each value is
-a list of residue-residue distances between the two atoms for each frame in frames_for_volumes.</p>
+<dd class="field-even"><p>A DataFrame with information about each order parameter examined by the
+software.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dictionary mapping tuples of 2 ints to lists of floats</p>
+<dd class="field-odd"><p>Pandas DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -202,18 +204,21 @@ function displays them as hollow to decrease lag.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.correlate_pockets">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">correlate_pockets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dists_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dists_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_print</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.correlate_pockets" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">correlate_pockets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.correlate_pockets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find correlated order parameters between 2 proteins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dists_1</strong> (<em>dictionary</em>) – This is a dictionary mapping tuples of 2 ints to lists of floats.  It maps two atom indices
-to a list of the distances between these atoms for each frame.  It is the output of compare_frames.</p></li>
-<li><p><strong>dists_2</strong> (<em>dictionary</em>) – This has the same format as dists_1 (i.e. the output of compare_frames).  It stores the distances for the
-other pocket to be compared.</p></li>
-<li><p><strong>num_print</strong> (<em>int</em>) – This controls how many order-parameter pairs are printed.  The function prints the num_print pairs with the
-highest correlations, and the num_print pairs with the lowest correlations.</p></li>
+<li><p><strong>df_1</strong> (<em>Pandas DataFrame</em>) – This should be the output of compare_frames for one of the pockets of interest.</p></li>
+<li><p><strong>df_2</strong> (<em>Pandas DataFrame</em>) – This should be the output of compare_frames for the other pocket of interest.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A DataFrame with information about each pair of order parameters examined by the
+software.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pandas DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -242,7 +247,8 @@ been expanded by 1 grid position in all dimensions.</p>
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lengths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_box" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a voxelized box.</p>
 <p>The function creates a trimesh VoxelGrid box
-based on the input parameters.</p>
+based on the input parameters.  The box is filled; i.e.
+internal points are occupied.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -266,7 +272,8 @@ choice.</p></li>
 <span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_sphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a voxelized sphere.</p>
 <p>The function creates a trimesh VoxelGrid sphere
-based on the input parameters.</p>
+based on the input parameters.  The sphere is filled;
+i.e. internal points are occupied.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
