@@ -199,7 +199,7 @@ def correlate_pockets(df_1, df_2):
     return df
 
 
-def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
+def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small, pocket_big, pocket_small, volumes,
                    frames_for_volumes):
     """
     Get order parameters that quantify the conformational change between two pockets.
@@ -214,10 +214,19 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
         is smaller.
     u : MDAnalysis universe
         The universe object that the data are taken from.
-    prots : list of ProteinSurface objects
-        A ProteinSurface for each frame in frames_for_volumes.
-    pockets : list of trimesh VoxelGrid objects
-        The pocket interior of each frame in frames_for_volumes.
+    protein_surface_big : ProteinSurface object
+        A ProteinSurface for the selected frame where the pocket volume
+        is bigger.
+    protein_surface_small : ProteinSurface object
+        A ProteinSurface for the selected frame where the pocket volume
+        is smaller.
+    pocket_big : trimesh VoxelGrid object
+        The pocket interior of the selected frame where the pocket volume
+        is bigger.  This is found by subtracting the protein surface from the
+        region of interest
+    pocket_small : trimesh VoxelGrid object
+        The pocket interior of the selected frame where the pocket volume
+        is smaller.
     volumes : list of floats
         The volume of each frame in frames_for_volumes.
     frames_for_volumes : slice of MDAnalysis trajectory
@@ -231,11 +240,13 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
         software.
     """
 
-    check_equal_pitches(prots[0].surf, pockets[0])
-    grid_size = prots[0].surf.pitch[0]
+    check_equal_pitches(protein_surface_big.surf, pocket_big)
+    check_equal_pitches(protein_surface_big.surf, pocket_small)
+    check_equal_pitches(protein_surface_small.surf, pocket_small)
+    grid_size = protein_surface_small.surf.pitch[0]
 
-    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(prots[traj_index_big], pockets[traj_index_big], u, solvent_rad=1.09, grid_size=grid_size)
-    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(prots[traj_index_small], pockets[traj_index_small], u, solvent_rad=1.09, grid_size=grid_size)
+    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u, solvent_rad=1.09, grid_size=grid_size)
+    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u, solvent_rad=1.09, grid_size=grid_size)
     
     pocket_big_mda_indices = []
     for atom in pocket_atoms_frame_big:
@@ -269,10 +280,10 @@ def compare_frames(traj_index_big, traj_index_small, u, prots, pockets, volumes,
             outlier_indices.append(index)
             
     # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.
-    pocket_small_edge = get_prot_pocket(prots[traj_index_small].surf, pockets[traj_index_small])
+    pocket_small_edge = get_prot_pocket(protein_surface_small.surf, pocket_small)
     dict_index_to_pocket_voxels = {}
     for index in outlier_indices:
-        atom_sphere = prots[traj_index_small].dict_mda_index_to_atom_geo[index].voxel_sphere
+        atom_sphere = protein_surface_small.dict_mda_index_to_atom_geo[index].voxel_sphere
         this_atom_pocket_contribution = voxel_and(pocket_small_edge, atom_sphere)
         if this_atom_pocket_contribution:
             this_atom_num_surface_voxels = this_atom_pocket_contribution.filled_count
