@@ -1,2 +1,5 @@
 __pycache__
 .ipynb_checkpoints
+volume_finder.egg-info
+build
+volume_finder/__pycache__

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>volume_finder module &#8212; volume_finder 0.1 documentation</title>
+    <title>volume_finder package &#8212; volume_finder 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -32,11 +32,16 @@
 
           <div class="body" role="main">
             
-  <section id="module-volume_finder">
-<span id="volume-finder-module"></span><h1>volume_finder module<a class="headerlink" href="#module-volume_finder" title="Permalink to this heading">¶</a></h1>
+  <section id="volume-finder-package">
+<h1>volume_finder package<a class="headerlink" href="#volume-finder-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-volume_finder.volume_finder">
+<span id="volume-finder-volume-finder-module"></span><h2>volume_finder.volume_finder module<a class="headerlink" href="#module-volume_finder.volume_finder" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="volume_finder.AtomGeo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">AtomGeo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_sphere</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.AtomGeo" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.AtomGeo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">AtomGeo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_sphere</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.AtomGeo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A surface representation of an atom.</p>
 <dl class="field-list simple">
@@ -50,8 +55,8 @@ molecule added to it.</p></li>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="volume_finder.AtomGeo.mda_atom">
-<span class="sig-name descname"><span class="pre">mda_atom</span></span><a class="headerlink" href="#volume_finder.AtomGeo.mda_atom" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.AtomGeo.mda_atom">
+<span class="sig-name descname"><span class="pre">mda_atom</span></span><a class="headerlink" href="#volume_finder.volume_finder.AtomGeo.mda_atom" title="Permalink to this definition">¶</a></dt>
 <dd><p>The atom that was passed during object construction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -61,8 +66,8 @@ molecule added to it.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="volume_finder.AtomGeo.voxel_sphere">
-<span class="sig-name descname"><span class="pre">voxel_sphere</span></span><a class="headerlink" href="#volume_finder.AtomGeo.voxel_sphere" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.AtomGeo.voxel_sphere">
+<span class="sig-name descname"><span class="pre">voxel_sphere</span></span><a class="headerlink" href="#volume_finder.volume_finder.AtomGeo.voxel_sphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sphere that was passed during object construction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -74,8 +79,8 @@ molecule added to it.</p></li>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="volume_finder.ProteinSurface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_geo_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_geo_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A surface representation of a protein.</p>
 <dl class="field-list simple">
@@ -92,8 +97,8 @@ value is 0.7.</p></li>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="volume_finder.ProteinSurface.surf">
-<span class="sig-name descname"><span class="pre">surf</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.surf" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface.surf">
+<span class="sig-name descname"><span class="pre">surf</span></span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface.surf" title="Permalink to this definition">¶</a></dt>
 <dd><p>The surface of the protein.  The interior is filled.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -103,8 +108,8 @@ value is 0.7.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="volume_finder.ProteinSurface.mda_atomgroup">
-<span class="sig-name descname"><span class="pre">mda_atomgroup</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.mda_atomgroup" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface.mda_atomgroup">
+<span class="sig-name descname"><span class="pre">mda_atomgroup</span></span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface.mda_atomgroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>The AtomGroup that was provided during ProteinSurface construction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -114,8 +119,8 @@ value is 0.7.</p></li>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="volume_finder.ProteinSurface.atom_geo_list">
-<span class="sig-name descname"><span class="pre">atom_geo_list</span></span><a class="headerlink" href="#volume_finder.ProteinSurface.atom_geo_list" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface.atom_geo_list">
+<span class="sig-name descname"><span class="pre">atom_geo_list</span></span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface.atom_geo_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contains an AtomGeo for each atom in mda_atomgroup.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
@@ -127,8 +132,8 @@ value is 0.7.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.check_equal_pitches">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">check_equal_pitches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.check_equal_pitches" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.check_equal_pitches">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">check_equal_pitches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.check_equal_pitches" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verify that two voxel grids have the same pitch as each other.</p>
 <p>Verifies that voxel_grid_1 and voxel_grid_2 have
 pitches equal to each other and the same in each
@@ -150,8 +155,8 @@ direction.  Raises an error if this is not true.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.compare_frames">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prots</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pockets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.compare_frames">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get order parameters that quantify the conformational change between two pockets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -161,8 +166,15 @@ is bigger.</p></li>
 <li><p><strong>traj_index_small</strong> (<em>int</em>) – The frame number (0-indexed) of the selected frame where the pocket volume
 is smaller.</p></li>
 <li><p><strong>u</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
-<li><p><strong>prots</strong> (<em>list of ProteinSurface objects</em>) – A ProteinSurface for each frame in frames_for_volumes.</p></li>
-<li><p><strong>pockets</strong> (<em>list of trimesh VoxelGrid objects</em>) – The pocket interior of each frame in frames_for_volumes.</p></li>
+<li><p><strong>protein_surface_big</strong> (<em>ProteinSurface object</em>) – A ProteinSurface for the selected frame where the pocket volume
+is bigger.</p></li>
+<li><p><strong>protein_surface_small</strong> (<em>ProteinSurface object</em>) – A ProteinSurface for the selected frame where the pocket volume
+is smaller.</p></li>
+<li><p><strong>pocket_big</strong> (<em>trimesh VoxelGrid object</em>) – The pocket interior of the selected frame where the pocket volume
+is bigger.  This is found by subtracting the protein surface from the
+region of interest</p></li>
+<li><p><strong>pocket_small</strong> (<em>trimesh VoxelGrid object</em>) – The pocket interior of the selected frame where the pocket volume
+is smaller.</p></li>
 <li><p><strong>volumes</strong> (<em>list of floats</em>) – The volume of each frame in frames_for_volumes.</p></li>
 <li><p><strong>frames_for_volumes</strong> (<em>slice of MDAnalysis trajectory</em>) – The frames that prots, pockets, and volumes contain.
 E.g. u.trajectory[0:50]</p></li>
@@ -179,8 +191,8 @@ software.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.compare_prots">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_prots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.compare_prots" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.compare_prots">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_prots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions_2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.compare_prots" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays two voxelized proteins in a Jupyter notebook.</p>
 <p>Uses PyVista to show two proteins.  They are shown together,
 and each protein is shown separately.
@@ -203,8 +215,8 @@ function displays them as hollow to decrease lag.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.correlate_pockets">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">correlate_pockets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.correlate_pockets" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.correlate_pockets">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">correlate_pockets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.correlate_pockets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find correlated order parameters between 2 proteins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -224,8 +236,8 @@ software.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.dilate_voxel_grid">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">dilate_voxel_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.dilate_voxel_grid" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.dilate_voxel_grid">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">dilate_voxel_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.dilate_voxel_grid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a dilated version of the input shape.</p>
 <p>The function creates a version of the input shape that has
 been expanded by 1 grid position in all dimensions.</p>
@@ -243,8 +255,8 @@ been expanded by 1 grid position in all dimensions.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.generate_voxelized_box">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lengths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_box" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.generate_voxelized_box">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lengths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.generate_voxelized_box" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a voxelized box.</p>
 <p>The function creates a trimesh VoxelGrid box
 based on the input parameters.  The box is filled; i.e.
@@ -268,8 +280,8 @@ choice.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.generate_voxelized_sphere">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.generate_voxelized_sphere" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.generate_voxelized_sphere">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">generate_voxelized_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.generate_voxelized_sphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a voxelized sphere.</p>
 <p>The function creates a trimesh VoxelGrid sphere
 based on the input parameters.  The sphere is filled;
@@ -293,13 +305,13 @@ choice.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.get_pocket_atoms">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.get_pocket_atoms">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all protein atoms that border the pocket.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>protein_surface_obj</strong> (<a class="reference internal" href="#volume_finder.ProteinSurface" title="volume_finder.ProteinSurface"><em>ProteinSurface</em></a>) – The protein molecule.  The object must be
+<li><p><strong>protein_surface_obj</strong> (<a class="reference internal" href="#volume_finder.volume_finder.ProteinSurface" title="volume_finder.volume_finder.ProteinSurface"><em>ProteinSurface</em></a>) – The protein molecule.  The object must be
 the ProteinSurface type defined in this software.</p></li>
 <li><p><strong>pocket_surf</strong> (<em>trimesh VoxelGrod</em>) – The pocket.</p></li>
 </ul>
@@ -315,8 +327,8 @@ the ProteinSurface type defined in this software.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.get_prot_pocket">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_prot_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.get_prot_pocket" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.get_prot_pocket">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_prot_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.get_prot_pocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets all voxels of the protein that border the pocket.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -335,8 +347,8 @@ the ProteinSurface type defined in this software.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.show_pocket">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prot_vox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_vox</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.show_pocket" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.show_pocket">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prot_vox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_vox</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.show_pocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays a protein and its pocket in a Jupyter notebook.</p>
 <p>Uses PyVista to show both the protein and the pocket volume.
 The protein and pocket are shown as being hollow; i.e. if
@@ -354,8 +366,8 @@ function displays them as hollow to decrease lag.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.voxel_and">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_and</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_and" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.voxel_and">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_and</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.voxel_and" title="Permalink to this definition">¶</a></dt>
 <dd><p>Finds all points in both voxel_grid_1 and voxel_grid_2.</p>
 <p>Returns a VoxelGrid with all points in both voxel_grid_1
 and voxel_grid_2.  Returns None if the two objects have no
@@ -379,8 +391,8 @@ in each dimension (and same pitch as voxel_grid_1).</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.voxel_or">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_or</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_or" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.voxel_or">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_or</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.voxel_or" title="Permalink to this definition">¶</a></dt>
 <dd><p>Finds all points in voxel_grid_1 and/or voxel_grid_2.</p>
 <p>Returns a VoxelGrid with all points in at least one of voxel_grid_1 and
 voxel_grid_2.  Unlike the trimesh library’s
@@ -405,8 +417,8 @@ in each dimension (and same pitch as voxel_grid_1).</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.voxel_subtract">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.voxel_subtract" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.voxel_subtract">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_subtract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_grid_2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.voxel_subtract" title="Permalink to this definition">¶</a></dt>
 <dd><p>voxel_grid_1 - voxel_grid_2.</p>
 <p>Returns a VoxelGrid object containing all points in
 voxel_grid_1 that are not in voxel_grid_2.  The
@@ -432,8 +444,8 @@ voxel_grid_1</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="volume_finder.write_voxels_to_pdb">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.</span></span><span class="sig-name descname"><span class="pre">write_voxels_to_pdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.write_voxels_to_pdb" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="volume_finder.volume_finder.write_voxels_to_pdb">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">write_voxels_to_pdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.write_voxels_to_pdb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a VoxelGrid object to a PDB file.</p>
 <p>Each voxel is written as an atom of name “X”.  The result can
 be viewed in PyMOL; users may want to use <cite>set sphere_scale [radius]</cite>
@@ -448,6 +460,10 @@ where <cite>radius</cite> is 1/2 the voxel grid size.</p>
 </dl>
 </dd></dl>
 
+</section>
+<section id="module-volume_finder">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-volume_finder" title="Permalink to this heading">¶</a></h2>
+</section>
 </section>
 
 
