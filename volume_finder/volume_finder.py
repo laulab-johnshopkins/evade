@@ -468,7 +468,7 @@ def dilate_voxel_grid(voxel_grid):
     # scipy's binary_dilation won't expand the input matrix's
     # size to fit the enlarged shape.  This is fixed by adding
     # an extra row and column to the matrix before dilating.
-    if not (voxel_grid.pitch[0] == voxel_grid.pitch[1] == voxel_grid[2]):
+    if not (voxel_grid.pitch[0] == voxel_grid.pitch[1] == voxel_grid.pitch[2]):
         raise ValueError("Pitches must be equal in all 3 dimensions")
     big_array = np.pad(voxel_grid.matrix, pad_width=((1,0), (1,0), (1,0)), constant_values=False)
     dilated_x_orig = voxel_grid.origin[0] - voxel_grid.scale[0]
