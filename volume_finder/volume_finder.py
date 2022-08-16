@@ -22,13 +22,14 @@ class AtomGeo:
 
     Attributes
     ----------
-    mda_atom : MDAnalysis Atom
-        The atom that was passed during object construction.
+    mda_atomgroup : MDAnalysis AtomGroup containing one atom
+        An AtonGroup containing the atom that was passed during
+        object construction.  mda_atomgroup[0] accesses the atom.
     voxel_sphere : trimesh VoxelGrid
         The sphere that was passed during object construction.
     """
     def __init__(self, mda_atom, voxel_sphere):
-        self.mda_atom = mda_atom
+        self.mda_atomgroup = mda.AtomGroup([mda_atom])
         self.voxel_sphere = voxel_sphere
 
 
@@ -93,7 +94,7 @@ class ProteinSurface:
             self.atom_geo_list = atom_geo_list
             self.dict_mda_index_to_atom_geo = {}
             for atom_geo in atom_geo_list:
-                self.dict_mda_index_to_atom_geo[atom_geo.mda_atom.index] = atom_geo
+                self.dict_mda_index_to_atom_geo[atom_geo.mda_atomgroup[0].index] = atom_geo
             return
         self.atom_geo_list = []
         self.dict_mda_index_to_atom_geo = {}
@@ -250,11 +251,11 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     
     pocket_big_mda_indices = []
     for atom in pocket_atoms_frame_big:
-        pocket_big_mda_indices.append(atom.mda_atom.index)
+        pocket_big_mda_indices.append(atom.mda_atomgroup[0].index)
 
     pocket_small_mda_indices = []
     for atom in pocket_atoms_frame_small:
-        pocket_small_mda_indices.append(atom.mda_atom.index)
+        pocket_small_mda_indices.append(atom.mda_atomgroup[0].index)
     
     # Find out how much each atom moved between the two frames of interest.  This will
     # be used to choose atoms that are unusually mobile or stationary.
@@ -393,11 +394,11 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.4
         if atom_pocket_overlap:
             pocket_atoms.append(atom_geo)
     pocket = pocket_atoms[0].voxel_sphere
-    indices = [pocket_atoms[0].mda_atom.index]
+    indices = [pocket_atoms[0].mda_atomgroup[0].index]
     atom_geo_list = []
     for atom_geo in pocket_atoms[1:]:
         pocket = voxel_or(pocket, atom_geo.voxel_sphere)
-        indices.append(atom_geo.mda_atom.index)
+        indices.append(atom_geo.mda_atomgroup[0].index)
         atom_geo_list.append(atom_geo)
     indices_string = " ".join(str(index) for index in indices)
     sel_str = "index %s" %(indices_string)
