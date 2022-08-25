@@ -871,6 +871,56 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
     pl.show()
 
 
+def show_one_prot(protein_surface, color="red", sel_regions=None):
+    """Displays a voxelized protein in a Jupyter notebook.
+    
+    Uses PyVista to show a proteins.  It is shown as being hollow; i.e. if
+    users zoom past the surface they'll see the inside of the shape.
+    The rest of the software package uses filled shapes, but this
+    function displays them as hollow to decrease lag.
+    
+    Parameters
+    ----------
+    protein_surface : ProteinSurface object
+        The protein to be displayed.
+    color : string, optional
+        The color of regions not described by sel_regions.
+        The default value is "red".
+    sel_regions : dictionary mapping MDAnalysis AtomGroups to strings
+        The colors for selected regions of the protein.
+    """ 
+
+    dict_sel_shape_to_color = {}
+    non_sel_region = protein_surface.surf
+    if sel_regions:
+        for sel_region_mda, sel_color in sel_regions.items():
+            sel_region = None # initialization
+            for selected_atom in sel_region_mda:
+                sel_atom_geo = protein_surface.dict_mda_index_to_atom_geo[selected_atom.index]
+                if sel_region:
+                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                else:
+                    sel_region = sel_atom_geo.voxel_sphere
+            non_sel_region = voxel_subtract(non_sel_region, sel_region)
+            dict_sel_shape_to_color[sel_region] = sel_color
+    
+    non_sel_vox = non_sel_region.copy()
+    non_sel_vox.hollow()
+    non_sel_trimesh = non_sel_vox.as_boxes()
+    non_sel_pv = pv.wrap(non_sel_trimesh)
+    
+    pl = pv.Plotter()
+    pl.add_mesh(non_sel_pv, color=color)
+    if sel_regions:
+        for sel_region, color in dict_sel_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.show()
+
+
 def show_pocket(prot_vox, pocket_vox):
     """Displays a protein and its pocket in a Jupyter notebook.
     

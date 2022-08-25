@@ -348,6 +348,26 @@ the ProteinSurface type defined in this software.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.volume_finder.show_one_prot">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_one_prot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sel_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.show_one_prot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays a voxelized protein in a Jupyter notebook.</p>
+<p>Uses PyVista to show a proteins.  It is shown as being hollow; i.e. if
+users zoom past the surface they’ll see the inside of the shape.
+The rest of the software package uses filled shapes, but this
+function displays them as hollow to decrease lag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein_surface</strong> (<em>ProteinSurface object</em>) – The protein to be displayed.</p></li>
+<li><p><strong>color</strong> (<em>string</em><em>, </em><em>optional</em>) – The color of regions not described by sel_regions.
+The default value is “red”.</p></li>
+<li><p><strong>sel_regions</strong> (<em>dictionary mapping MDAnalysis AtomGroups to strings</em>) – The colors for selected regions of the protein.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volume_finder.show_pocket">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">show_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prot_vox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_vox</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.show_pocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays a protein and its pocket in a Jupyter notebook.</p>

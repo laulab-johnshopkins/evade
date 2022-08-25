@@ -19,3 +19,6 @@ Documentation is stored in the `doc` directory.  To recreate this directory, do 
                
   * The output `index.html` might lack sufficient text.  If so, edit `index.rst`.
       * Under the `toctree` command, you can add filenames.  E.g. add `page1` if there is a `page1.rst` file.  Note that the rst file must have a title for autodoc to include it.
+
+## Adding Functions To The Code
+Whenever a new function is added, it must be imported in `__init__.py`.
