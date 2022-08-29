@@ -157,7 +157,7 @@ direction.  Raises an error if this is not true.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volume_finder.compare_frames">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heavy_atoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.compare_frames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get order parameters that quantify the conformational change between two pockets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -179,6 +179,9 @@ is smaller.</p></li>
 <li><p><strong>volumes</strong> (<em>list of floats</em>) – The volume of each frame in frames_for_volumes.</p></li>
 <li><p><strong>frames_for_volumes</strong> (<em>slice of MDAnalysis trajectory</em>) – The frames that prots, pockets, and volumes contain.
 E.g. u.trajectory[0:50]</p></li>
+<li><p><strong>heavy_atoms</strong> (<em>bool</em><em>, </em><em>optional</em>) – When the algorithm checks a hydrogen atoms, and heavy_atoms is True,
+the software will switch to the heavy atom that the H is bound to.  The
+default value of heavy_atoms is True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

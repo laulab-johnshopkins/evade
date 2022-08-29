@@ -201,7 +201,7 @@ def correlate_pockets(df_1, df_2):
 
 
 def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small, pocket_big, pocket_small, volumes,
-                   frames_for_volumes):
+                   frames_for_volumes, heavy_atoms=True):
     """
     Get order parameters that quantify the conformational change between two pockets.
     
@@ -233,6 +233,10 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     frames_for_volumes : slice of MDAnalysis trajectory
         The frames that prots, pockets, and volumes contain.
         E.g. u.trajectory[0:50]
+    heavy_atoms : bool, optional
+        When the algorithm checks a hydrogen atoms, and heavy_atoms is True,
+        the software will switch to the heavy atom that the H is bound to.  The
+        default value of heavy_atoms is True.
 
     Returns
     -------
@@ -308,9 +312,22 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     # Iterate over pairs of atoms chosen above.  For each pair, find the distance
     # between atoms in both frames of interest.  Use this to get the "relative difference"
     # of how much the distance changes between the two frames.
+    def get_heavy_index(h_index):
+        h_atom = u.atoms[h_index]
+        if mda.topology.guessers.guess_atom_element(h_atom.type) != "H":
+            return h_index
+        heavy_atom = h_atom.bonded_atoms[0]
+        return heavy_atom.index
+    
     dict_index_pair_to_rel_op_dist = {}
     for moving_index in key_moving_indices:
+        if heavy_atoms:
+            moving_index = get_heavy_index(moving_index)
         for stationary_index in key_stationary_indices:
+            if heavy_atoms:
+                stationary_index = get_heavy_index(stationary_index)
+                if stationary_index == moving_index:
+                    continue
             u.trajectory[traj_index_big]
             op_dist_frame_big = math.dist(u.atoms[moving_index].position,
                                         u.atoms[stationary_index].position)
@@ -323,6 +340,10 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
             dict_index_pair_to_rel_op_dist[(moving_index, stationary_index)] = rel_diff
         for other_moving_index in key_moving_indices:
             if other_moving_index > moving_index: # The > avoids double-counting.
+                if heavy_atoms:
+                    other_moving_index = get_heavy_index(other_moving_index)
+                    if other_moving_index == moving_index:
+                        continue
                 u.trajectory[traj_index_big]
                 op_dist_frame_big = math.dist(u.atoms[moving_index].position,
                                             u.atoms[other_moving_index].position)
