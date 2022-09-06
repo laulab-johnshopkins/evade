@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import MDAnalysis as mda
+from MDAnalysis.analysis import align, rms
 import trimesh
 import pyvista as pv
 import pandas as pd
@@ -57,10 +58,13 @@ class ProteinSurface:
         The AtomGroup that was provided during ProteinSurface construction.
     atom_geo_list : list of AtomGeo objects
         Contains an AtomGeo for each atom in mda_atomgroup.
+    solvent_rad : float
+        The distance that is added to the radius of each atom in the surface.  This is to replicate the
+        solvent-accessible surface area.  This value should not be changed after object initialization.
     """
-    def __init__(self, mda_atomgroup, solvent_rad=1.4, grid_size=0.7, surf=None, atom_geo_list=None):
+    def __init__(self, mda_atomgroup, solvent_rad=1.09, grid_size=0.7, surf=None, atom_geo_list=None):
         self.mda_atomgroup = mda_atomgroup
-        self.solvent_rad = solvent_rad # FIXME private?
+        self.solvent_rad = solvent_rad
         
         # Generate surface
         dict_radius_to_voxel_sphere = {}
@@ -147,6 +151,75 @@ class ProteinSurface:
 
 
 vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
+
+
+def align_to_pocket(protein_surf, pocket_shape, universe,
+                    copy_filename, frame_to_align_to):
+    """Align an MD trajectory to the coordinates of a pocket.
+
+    Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
+    Global alignment can be too imprecise for this; it's best to align the trajectory to the pocket.  The
+    trajectory can be aligned to where the pocket is in any frame; the user must choose which frame.  (The
+    first frame is a logical choice.)
+
+    Parameters
+    ----------
+    protein_surf : ProteinSurface object
+        The surface at the frame being aligned to.
+    pocket_shape : trimesh VoxelGrod
+        The interior of the pocket for the frame being aligned to.  This is found by subtracting
+        the protein surface from the region of interest using voxel_subtract.
+    universe : MDAnalysis universe
+        The universe object that the data are taken from.
+    copy_filename : string
+        Because this function returns an MDAnalysis Universe object, it must create a trajectory file
+        for the Universe to read.  The filename is input here.  It needs to be a format that can function
+        as a single file; e.g. a multiframe PDB file.  (DCD/PSF doesnt' work because it requires both files.)
+    frame_to_align_to : integer
+        The frame of the trajectory that other frames should be aligned to.  protein_surf and pocket_shape should
+        come from this frame.
+
+    Returns
+    -------
+    MDAnalysis universe
+        An MDAnalysis universe containing the aligned trajectory.
+    """
+
+    check_equal_pitches(protein_surf.surf, pocket_shape)
+    grid_size = protein_surf.surf.pitch[0]
+    solvent_rad = protein_surf.solvent_rad
+    # Determine which atoms are in the pocket.
+    pocket_atoms_list, pocket_atoms_surf = get_pocket_atoms(protein_surf, pocket_shape,
+                                                            universe, solvent_rad,
+                                                            grid_size)
+    pocket_mda_indices = []
+    for atom in pocket_atoms_list:
+        pocket_mda_indices.append(atom.mda_atomgroup[0].index)
+    indices_string = " ".join(str(index) for index in pocket_mda_indices)
+    sel_str = "index %s" %(indices_string)
+    
+    # MDAnalysis requires 2 universes for alignment.
+    u_copy = universe.copy()
+
+    # Print RMSDs before alignment
+    universe.trajectory[frame_to_align_to]
+    u_copy.trajectory[-1]
+    print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
+    print(rms.rmsd(u_copy.select_atoms(sel_str).positions, universe.select_atoms(sel_str).positions, superposition=False))
+
+    # Align the trajectory.
+    u_copy.trajectory[frame_to_align_to]
+    mda.analysis.align.AlignTraj(u_copy, universe, select=sel_str, filename=copy_filename).run()
+    u_copy=mda.Universe(copy_filename)
+    
+    # Print RMSDs after alignment.
+    universe.trajectory[frame_to_align_to]
+    u_copy.trajectory[-1]
+    print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
+    print(rms.rmsd(u_copy.select_atoms(sel_str).positions, universe.select_atoms(sel_str).positions, superposition=False))
+    u_copy.trajectory[frame_to_align_to]
+
+    return u_copy
 
 
 def correlate_pockets(df_1, df_2):
@@ -249,9 +322,13 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     check_equal_pitches(protein_surface_big.surf, pocket_small)
     check_equal_pitches(protein_surface_small.surf, pocket_small)
     grid_size = protein_surface_small.surf.pitch[0]
+    if protein_surface_big.solvent_rad == protein_surface_small.solvent_rad:
+        solvent_rad = protein_surface_big.solvent_rad
+    else:
+        raise ValueError("protein_surface_big and protein_surface_small have different solvent_rad values")
 
-    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u, solvent_rad=1.09, grid_size=grid_size)
-    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u, solvent_rad=1.09, grid_size=grid_size)
+    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u, solvent_rad=solvent_rad, grid_size=grid_size)
+    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u, solvent_rad=solvent_rad, grid_size=grid_size)
     
     pocket_big_mda_indices = []
     for atom in pocket_atoms_frame_big:
@@ -389,7 +466,7 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     return df
 
 
-def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.4, grid_size=0.7):
+def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.09, grid_size=0.7):
     """
     Get all protein atoms that border the pocket.
     
@@ -400,6 +477,16 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.4
         the ProteinSurface type defined in this software.
     pocket_surf : trimesh VoxelGrod
         The pocket.
+    universe : MDAnalysis universe
+        The universe object that the data are taken from.
+    solvent_rad : float, optional
+        The protein surface is constructed from the protein atoms'
+        van der Waals radii plus the radius of a hypothetical solvent molecule.
+        The default value is 1.09 (the van der Waals radius of hydrogen); this was
+        chosen because POVME uses this value.
+    grid_size : float, optional
+        The length (in Angstroms) of each side of a voxel.  The default
+        value is 0.7.
 
     Returns
     -------

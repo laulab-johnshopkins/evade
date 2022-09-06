@@ -81,7 +81,7 @@ object construction.  mda_atomgroup[0] accesses the atom.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_geo_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">ProteinSurface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mda_atomgroup</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_geo_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A surface representation of a protein.</p>
 <dl class="field-list simple">
@@ -130,6 +130,49 @@ value is 0.7.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="volume_finder.volume_finder.ProteinSurface.solvent_rad">
+<span class="sig-name descname"><span class="pre">solvent_rad</span></span><a class="headerlink" href="#volume_finder.volume_finder.ProteinSurface.solvent_rad" title="Permalink to this definition">¶</a></dt>
+<dd><p>The distance that is added to the radius of each atom in the surface.  This is to replicate the
+solvent-accessible surface area.  This value should not be changed after object initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.volume_finder.align_to_pocket">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">align_to_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_to_align_to</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.align_to_pocket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Align an MD trajectory to the coordinates of a pocket.</p>
+<p>Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
+Global alignment can be too imprecise for this; it’s best to align the trajectory to the pocket.  The
+trajectory can be aligned to where the pocket is in any frame; the user must choose which frame.  (The
+first frame is a logical choice.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>protein_surf</strong> (<em>ProteinSurface object</em>) – The surface at the frame being aligned to.</p></li>
+<li><p><strong>pocket_shape</strong> (<em>trimesh VoxelGrod</em>) – The interior of the pocket for the frame being aligned to.  This is found by subtracting
+the protein surface from the region of interest using voxel_subtract.</p></li>
+<li><p><strong>universe</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
+<li><p><strong>copy_filename</strong> (<em>string</em>) – Because this function returns an MDAnalysis Universe object, it must create a trajectory file
+for the Universe to read.  The filename is input here.  It needs to be a format that can function
+as a single file; e.g. a multiframe PDB file.  (DCD/PSF doesnt’ work because it requires both files.)</p></li>
+<li><p><strong>frame_to_align_to</strong> (<em>integer</em>) – The frame of the trajectory that other frames should be aligned to.  protein_surf and pocket_shape should
+come from this frame.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An MDAnalysis universe containing the aligned trajectory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>MDAnalysis universe</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -310,7 +353,7 @@ choice.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volume_finder.get_pocket_atoms">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all protein atoms that border the pocket.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -318,6 +361,13 @@ choice.</p></li>
 <li><p><strong>protein_surface_obj</strong> (<a class="reference internal" href="#volume_finder.volume_finder.ProteinSurface" title="volume_finder.volume_finder.ProteinSurface"><em>ProteinSurface</em></a>) – The protein molecule.  The object must be
 the ProteinSurface type defined in this software.</p></li>
 <li><p><strong>pocket_surf</strong> (<em>trimesh VoxelGrod</em>) – The pocket.</p></li>
+<li><p><strong>universe</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
+<li><p><strong>solvent_rad</strong> (<em>float</em><em>, </em><em>optional</em>) – The protein surface is constructed from the protein atoms’
+van der Waals radii plus the radius of a hypothetical solvent molecule.
+The default value is 1.09 (the van der Waals radius of hydrogen); this was
+chosen because POVME uses this value.</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The length (in Angstroms) of each side of a voxel.  The default
+value is 0.7.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
