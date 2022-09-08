@@ -222,6 +222,35 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     return u_copy
 
 
+def voxel_surf_from_numpy(data_loc, grid_size):
+    """
+    Get a trimesh VoxelGrid from a numpy .npy file.
+    
+    Parameters
+    ----------
+    data_loc : string
+        The location of a numpy .npy file.  The file should contain points in a voxelized
+        shape.
+    grid_size : float
+        The spacing between grid points
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A trimesh VoxelGrid object containing the points in the data file.
+    """
+
+    data = np.load(data_loc)
+    min_points_in_data = [min(data[:,0]), min(data[:,1]), min(data[:,2])]
+    indices = trimesh.voxel.ops.points_to_indices(data, pitch=grid_size, origin=min_points_in_data)
+    surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(indices))
+    surf.apply_scale(grid_size)
+    surf = surf.copy()
+    surf.apply_translation(min_points_in_data)
+    surf = surf.copy()
+    return surf
+
+
 def correlate_pockets(df_1, df_2):
     """
     Find correlated order parameters between 2 proteins.

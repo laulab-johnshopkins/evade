@@ -4,7 +4,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>volume_finder package &#8212; volume_finder 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -518,6 +518,27 @@ voxel_grid_1</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="volume_finder.volume_finder.voxel_surf_from_numpy">
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">voxel_surf_from_numpy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.voxel_surf_from_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a trimesh VoxelGrid from a numpy .npy file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loc</strong> (<em>string</em>) – The location of a numpy .npy file.  The file should contain points in a voxelized
+shape.</p></li>
+<li><p><strong>grid_size</strong> (<em>float</em>) – The spacing between grid points</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A trimesh VoxelGrid object containing the points in the data file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>trimesh VoxelGrid object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volume_finder.write_voxels_to_pdb">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.volume_finder.</span></span><span class="sig-name descname"><span class="pre">write_voxels_to_pdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">voxel_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdb_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volume_finder.write_voxels_to_pdb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write a VoxelGrid object to a PDB file.</p>
@@ -591,7 +612,7 @@ where <cite>radius</cite> is 1/2 the voxel grid size.</p>
       &copy;2022, Daniel Evans.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

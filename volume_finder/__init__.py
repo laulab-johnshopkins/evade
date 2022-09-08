@@ -17,3 +17,4 @@ from .volume_finder import compare_prots
 from .volume_finder import show_pocket
 from .volume_finder import show_one_prot
 from .volume_finder import align_to_pocket
+from .volume_finder import voxel_surf_from_numpy
