@@ -144,9 +144,7 @@ class ProteinSurface:
         self.surf.apply_scale(grid_size)
         self.surf = self.surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
         self.surf.apply_translation([min(voxel_points[:,0]), min(voxel_points[:,1]), min(voxel_points[:,2])])
-        self.surf = self.surf.copy()
-        self.surf.fill()
-        self.surf = self.surf.copy()
+        self.surf = self.surf.copy() 
 
 
 
