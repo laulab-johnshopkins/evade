@@ -66,7 +66,10 @@ class ProteinSurface:
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad
         
-        # Generate surface
+        # Generate surface.  The process is iterative; each time it checks if the minimum point in the new
+        # voxel is less (in any dimension) than the previous minimum.  Therefore the first point must be
+        # initialized separately.  There's probably a way to implement this in fewer lines of code, but
+        # the implementation here works so I kept it.
         dict_radius_to_voxel_sphere = {}
         atom = self.mda_atomgroup[0]
         try:
@@ -100,8 +103,14 @@ class ProteinSurface:
             for atom_geo in atom_geo_list:
                 self.dict_mda_index_to_atom_geo[atom_geo.mda_atomgroup[0].index] = atom_geo
             return
+
         self.atom_geo_list = []
+        new_atom_geo = AtomGeo(atom, next_voxel)
+        self.atom_geo_list.append(new_atom_geo)
+
         self.dict_mda_index_to_atom_geo = {}
+        self.dict_mda_index_to_atom_geo[atom.index] = new_atom_geo
+
         for atom in self.mda_atomgroup[1:]:
             try:
                 element = atom.element
@@ -144,7 +153,9 @@ class ProteinSurface:
         self.surf.apply_scale(grid_size)
         self.surf = self.surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
         self.surf.apply_translation([min(voxel_points[:,0]), min(voxel_points[:,1]), min(voxel_points[:,2])])
-        self.surf = self.surf.copy() 
+        self.surf = self.surf.copy()
+        self.surf.fill()
+        self.surf = self.surf.copy()
 
 
 
