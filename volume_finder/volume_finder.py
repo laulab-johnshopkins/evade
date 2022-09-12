@@ -163,7 +163,7 @@ vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8}
 
 
 def align_to_pocket(protein_surf, pocket_shape, universe,
-                    copy_filename, frame_to_align_to):
+                    copy_filename, frame_to_align_to, psf_loc=None):
     """Align an MD trajectory to the coordinates of a pocket.
 
     Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
@@ -182,11 +182,14 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
         The universe object that the data are taken from.
     copy_filename : string
         Because this function returns an MDAnalysis Universe object, it must create a trajectory file
-        for the Universe to read.  The filename is input here.  It needs to be a format that can function
-        as a single file; e.g. a multiframe PDB file.  (DCD/PSF doesnt' work because it requires both files.)
+        for the Universe to read.  The filename is input here.  This can be either a PDB file or a DCD file.
+        If it is a DCD, then `psf_loc` must also be given.
     frame_to_align_to : integer
         The frame of the trajectory that other frames should be aligned to.  protein_surf and pocket_shape should
         come from this frame.
+    psf_loc : string, optional
+        If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.  If
+        `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default value is `None`.)
 
     Returns
     -------
@@ -219,7 +222,10 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     # Align the trajectory.
     u_copy.trajectory[frame_to_align_to]
     mda.analysis.align.AlignTraj(u_copy, universe, select=sel_str, filename=copy_filename).run()
-    u_copy=mda.Universe(copy_filename)
+    if psf_loc:
+        u_copy=mda.Universe(psf_loc, copy_filename)
+    else:
+        u_copy=mda.Universe(copy_filename)
     
     # Print RMSDs after alignment.
     universe.trajectory[frame_to_align_to]
