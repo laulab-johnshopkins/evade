@@ -14,7 +14,8 @@ from .volume_finder import voxel_subtract
 from .volume_finder import voxel_or
 from .volume_finder import voxel_and
 from .volume_finder import compare_prots
-from .volume_finder import show_pocket
+from .volume_finder import show_proteinsurf_and_voxelgrid
 from .volume_finder import show_one_prot
 from .volume_finder import align_to_pocket
 from .volume_finder import voxel_surf_from_numpy
+from .volume_finder import show_two_voxelgrids
