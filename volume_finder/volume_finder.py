@@ -1115,7 +1115,7 @@ def show_two_voxelgrids(voxelgrid_1, voxelgrid_2):
 
 def show_proteinsurf_and_voxelgrid(protein_surface, voxel_grid, color_prot="red", sel_regions=None,
                             color_voxels="blue"):
-    """Displays a ProteinSurface an a VoxelGrid in a Jupyter notebook.
+    """Displays a ProteinSurface and a VoxelGrid in a Jupyter notebook.
     
     Uses PyVista to show two objects.  They are shown together,
     and each object is shown separately.
@@ -1186,5 +1186,97 @@ def show_proteinsurf_and_voxelgrid(protein_surface, voxel_grid, color_prot="red"
             pl.add_mesh(sel_pv, color=color)
     pl.subplot(1,0)
     pl.add_mesh(voxel_pv, color=color_voxels)
+    pl.link_views()
+    pl.show()
+
+
+def show_proteinsurf_and_two_voxelgrids(protein_surface, voxel_grid_1,
+                                        voxel_grid_2, color_prot="red",
+                                        sel_regions=None, color_voxels_1="blue",
+                                        color_voxels_2="green"):
+                                        
+    """Displays a ProteinSurface and two VoxelGrids in a Jupyter notebook.
+    
+    Uses PyVista to show two objects.  They are shown together,
+    and each object is shown separately.
+    The objects are shown as being hollow; i.e. if
+    users zoom past the surface they'll see the inside of the shape.
+    The rest of the software package uses filled shapes, but this
+    function displays them as hollow to decrease lag.
+    
+    Parameters
+    ----------
+    protein_surface : ProteinSurface object
+        The ProteinSurface to be displayed.
+    voxel_grid_1 : trimest VoxelGrid object
+        A VoxelGrid to be displayed.
+    voxel_grid_2 : trimest VoxelGrid object
+        A VoxelGrid to be displayed.
+    color_prot : string, optional
+        The color of the ProteinSurface (except for any regions specified in sel_regions).
+        The default value is "red".
+    sel_regions : dictionary mapping MDAnalysis AtomGroups to strings
+        The colors for selected regions of the ProteinSurface.  Large selections slow
+        the initial rendering.
+    color_voxels_1 : string, optional
+        The color of the first VoxelGrid.  The default value is "blue".
+    color_voxels_2 : string, optional
+        The color of the second VoxelGrid.  The default value is "green".
+    """ 
+
+    dict_sel_1_shape_to_color = {}
+    non_sel_1_region = protein_surface.surf
+    if sel_regions:
+        for sel_region_mda, sel_color in sel_regions.items():
+            sel_region = None # initialization
+            for selected_atom in sel_region_mda:
+                sel_atom_geo = protein_surface.dict_mda_index_to_atom_geo[selected_atom.index]
+                if sel_region:
+                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                else:
+                    sel_region = sel_atom_geo.voxel_sphere
+            non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
+            dict_sel_1_shape_to_color[sel_region] = sel_color
+    
+    
+    non_sel_1_vox = non_sel_1_region.copy()
+    non_sel_1_vox.hollow()
+    non_sel_1_trimesh = non_sel_1_vox.as_boxes()
+    non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
+    
+    voxel_grid_1 = voxel_grid_1.copy()
+    voxel_grid_1.hollow()
+    voxel_1_trimesh = voxel_grid_1.as_boxes()
+    voxel_1_pv = pv.wrap(voxel_1_trimesh)
+    
+    voxel_grid_2 = voxel_grid_2.copy()
+    voxel_grid_2.hollow()
+    voxel_2_trimesh = voxel_grid_2.as_boxes()
+    voxel_2_pv = pv.wrap(voxel_2_trimesh)
+    
+    pl = pv.Plotter(shape=(2,2))
+    pl.add_mesh(non_sel_1_pv, color=color_prot)
+    if sel_regions:
+        for sel_region, color in dict_sel_1_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.add_mesh(voxel_1_pv, color=color_voxels_1)
+    pl.add_mesh(voxel_2_pv, color=color_voxels_2)
+    pl.subplot(0,1)
+    pl.add_mesh(non_sel_1_pv, color=color_prot)
+    if sel_regions:
+        for sel_region, color in dict_sel_1_shape_to_color.items():
+            sel_vox = sel_region.copy()
+            sel_vox.hollow()
+            sel_trimesh = sel_vox.as_boxes()
+            sel_pv = pv.wrap(sel_trimesh)
+            pl.add_mesh(sel_pv, color=color)
+    pl.subplot(1,0)
+    pl.add_mesh(voxel_1_pv, color=color_voxels_1)
+    pl.subplot(1,1)
+    pl.add_mesh(voxel_2_pv, color=color_voxels_2)
     pl.link_views()
     pl.show()

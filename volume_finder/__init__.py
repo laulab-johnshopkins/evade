@@ -19,3 +19,4 @@ from .volume_finder import show_one_prot
 from .volume_finder import align_to_pocket
 from .volume_finder import voxel_surf_from_numpy
 from .volume_finder import show_two_voxelgrids
+from .volume_finder import show_proteinsurf_and_two_voxelgrids
