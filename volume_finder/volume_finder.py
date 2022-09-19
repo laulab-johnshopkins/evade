@@ -237,6 +237,65 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     return u_copy
 
 
+def get_largest_shape(voxel_grid):
+    """
+    Get the largest shape in a trimesh VoxelGrid.
+    
+    Voxels kitty-corner from the largest shape are classified as being in a
+    separate shape; they are discarded.
+    
+    Parameters
+    ----------
+    voxel_grid : trimesh VoxelGrid object
+        The input VoxelGrid.  This object is not modified by this function.
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A trimesh VoxelGrid object containing the largest shape in the input
+        VoxelGrid.
+    """
+    
+    if not (voxel_grid.pitch[0] == voxel_grid.pitch[1] == voxel_grid.pitch[2]):
+        raise ValueError("Pitches must be equal in all 3 dimensions")
+    grid_size = voxel_grid.pitch[0]
+    
+    """scipy.ndimage assigns an integer label to each collection of contiguous points.
+    It classifies kitty-corner points as being in a separate object (unlike POVME).
+    It returns two items:
+    * A version of the input matrix where empty elements are assigned 0
+      and non-empty elements are assigned their label.
+    * The number of separate objects in the matrix.  (This would be 1 if there is
+      a single shape surrounded by empty space.)"""
+    classified_points = scipy.ndimage.label(voxel_grid.matrix)[0]
+
+    # Find out how many points are in each object.  Note that the first object is
+    # label 0; i.e. the empty points.
+    feature_labels, feature_sizes = np.unique(classified_points, return_counts=True)
+
+    # Goal: Get the label of the biggest shape.
+    # numpy.argmax returns the index of the highest value in an array.  If this value is present
+    # multiple times, the function returns the index of the first occurrence.  The first entry in
+    # feature_sizes is excluded because it counts empty voxels.  The +1 corrects for the first entry
+    # being missing.
+    index_of_most_populated_label = np.argmax(feature_sizes[1:])+1
+
+    # Create a VoxelGrid where the points in the largest shape are filled.
+    biggest_shape_matrix = np.full(classified_points.shape, False)
+    for i in range(classified_points.shape[0]):
+        for j in range(classified_points.shape[1]):
+            for k in range(classified_points.shape[2]):
+                next_point = classified_points[i][j][k]
+                if next_point == index_of_most_populated_label:
+                    biggest_shape_matrix[i][j][k] = True
+    output_surf = trimesh.voxel.VoxelGrid(biggest_shape_matrix)
+    output_surf.apply_scale(grid_size)
+    output_surf = output_surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
+    output_surf.apply_translation(voxel_grid.translation)
+    output_surf = output_surf.copy()
+    return output_surf
+
+
 def voxel_surf_from_numpy(data_loc, grid_size):
     """
     Get a trimesh VoxelGrid from a numpy .npy file.
