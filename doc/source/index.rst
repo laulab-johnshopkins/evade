@@ -9,11 +9,12 @@ Welcome to volume_finder's documentation!
 This software finds the volume of a pocket in an MD trajectory.
 To see how to use it, read the example Jupyter notebook.
 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
+   get_volumes.rst
 
 Indices and tables
 ==================

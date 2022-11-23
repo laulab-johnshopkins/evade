@@ -20,7 +20,6 @@ class AtomGeo:
         The sphere of volume occupied by the atom.  When constructed as
         part of a ProteinSurface, this will have the radius of a solvent
         molecule added to it.
-
     Attributes
     ----------
     mda_atomgroup : MDAnalysis AtomGroup containing one atom
@@ -49,7 +48,6 @@ class ProteinSurface:
     grid_size : float, optional
         The length (in Angstroms) of each side of a voxel.  The default
         value is 0.7.
-
     Attributes
     ----------
     surf : trimesh VoxelGrid
@@ -65,7 +63,7 @@ class ProteinSurface:
     def __init__(self, mda_atomgroup, solvent_rad=1.09, grid_size=0.7, surf=None, atom_geo_list=None):
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad
-        
+
         # Generate surface.  The process is iterative; each time it checks if the minimum point in the new
         # voxel is less (in any dimension) than the previous minimum.  Therefore the first point must be
         # initialized separately.  There's probably a way to implement this in fewer lines of code, but
@@ -131,9 +129,9 @@ class ProteinSurface:
 
             next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y, approx_trans_z]))
             next_voxel = next_voxel.copy()
-            
+
             end_index = start_index + next_voxel.filled_count
-            
+
             voxel_points[start_index:end_index] = next_voxel.points
             start_index = end_index
             num_atoms += 1
@@ -147,7 +145,7 @@ class ProteinSurface:
         voxel_points = voxel_points[0:end_index]
         all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size, origin=[min_x,min_y,min_z])
         self.surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
-        
+
         # The above code makes a surface with the correct shape.  But the surface is too large, and its origin
         # is [0,0,0].  The next few lines fix this.
         self.surf.apply_scale(grid_size)
@@ -190,7 +188,6 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     psf_loc : string, optional
         If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.  If
         `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default value is `None`.)
-
     Returns
     -------
     MDAnalysis universe
@@ -209,7 +206,7 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
         pocket_mda_indices.append(atom.mda_atomgroup[0].index)
     indices_string = " ".join(str(index) for index in pocket_mda_indices)
     sel_str = "index %s" %(indices_string)
-    
+
     # MDAnalysis requires 2 universes for alignment.
     u_copy = universe.copy()
 
@@ -248,7 +245,6 @@ def get_largest_shape(voxel_grid):
     ----------
     voxel_grid : trimesh VoxelGrid object
         The input VoxelGrid.  This object is not modified by this function.
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -307,7 +303,6 @@ def voxel_surf_from_numpy(data_loc, grid_size):
         shape.
     grid_size : float
         The spacing between grid points
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -323,250 +318,6 @@ def voxel_surf_from_numpy(data_loc, grid_size):
     surf.apply_translation(min_points_in_data)
     surf = surf.copy()
     return surf
-
-
-def correlate_pockets(df_1, df_2):
-    """
-    Find correlated order parameters between 2 proteins.
-    
-    Parameters
-    ----------
-    df_1 : Pandas DataFrame
-        This should be the output of compare_frames for one of the pockets of interest.
-    df_2 : Pandas DataFrame
-        This should be the output of compare_frames for the other pocket of interest.
-
-    Returns
-    -------
-    Pandas DataFrame
-        A DataFrame with information about each pair of order parameters examined by the
-        software.
-    """
-    
-    output_df_as_list = []
-    for index_1, row_1 in df_1.iterrows():
-        for index_2, row_2 in df_2.iterrows():
-            pearson, pval = scipy.stats.pearsonr(row_1["Distances"], row_2["Distances"])
-            row_1_as_list = row_1.values.tolist()
-            row_2_as_list = row_2.values.tolist()
-            row_of_output_df = row_1_as_list + row_2_as_list + [pearson, pval]
-            output_df_as_list.append(row_of_output_df)
-    df = pd.DataFrame(output_df_as_list, columns =["Pocket 1 Atom 1 index",
-                                                   "Pocket 1 Atom 2 index",
-                                                   "Pocket 1 Pearson of dists",
-                                                   "Pocket 1 p-value for Pearson",
-                                                   "Pocket 1 Atom 1 name",
-                                                   "Pocket 1 Atom 1 residue",
-                                                   "Pocket 1 Atom 2 name",
-                                                   "Pocket 1 Atom 2 residue",
-                                                   "Pocket 1 Rel. change in dist.",
-                                                   "Pocket 1 Distances",
-                                                   "Pocket 2 Atom 1 index",
-                                                   "Pocket 2 Atom 2 index",
-                                                   "Pocket 2 Pearson of dists",
-                                                   "Pocket 2 p-value for Pearson",
-                                                   "Pocket 2 Atom 1 name",
-                                                   "Pocket 2 Atom 1 residue",
-                                                   "Pocket 2 Atom 2 name",
-                                                   "Pocket 2 Atom 2 residue",
-                                                   "Pocket 2 Rel. change in dist.",
-                                                   "Pocket 2 Distances",
-                                                   "Pearson between dists",
-                                                   "p-value for pearson between lists"])
-    return df
-
-
-def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small, pocket_big, pocket_small, volumes,
-                   frames_for_volumes, heavy_atoms=True):
-    """
-    Get order parameters that quantify the conformational change between two pockets.
-    
-    Parameters
-    ----------
-    traj_index_big : int
-        The frame number (0-indexed) of the selected frame where the pocket volume
-        is bigger.
-    traj_index_small : int
-        The frame number (0-indexed) of the selected frame where the pocket volume
-        is smaller.
-    u : MDAnalysis universe
-        The universe object that the data are taken from.
-    protein_surface_big : ProteinSurface object
-        A ProteinSurface for the selected frame where the pocket volume
-        is bigger.
-    protein_surface_small : ProteinSurface object
-        A ProteinSurface for the selected frame where the pocket volume
-        is smaller.
-    pocket_big : trimesh VoxelGrid object
-        The pocket interior of the selected frame where the pocket volume
-        is bigger.  This is found by subtracting the protein surface from the
-        region of interest
-    pocket_small : trimesh VoxelGrid object
-        The pocket interior of the selected frame where the pocket volume
-        is smaller.
-    volumes : list of floats
-        The volume of each frame in frames_for_volumes.
-    frames_for_volumes : slice of MDAnalysis trajectory
-        The frames that prots, pockets, and volumes contain.
-        E.g. u.trajectory[0:50]
-    heavy_atoms : bool, optional
-        When the algorithm checks a hydrogen atoms, and heavy_atoms is True,
-        the software will switch to the heavy atom that the H is bound to.  The
-        default value of heavy_atoms is True.
-
-    Returns
-    -------
-    Pandas DataFrame
-        A DataFrame with information about each order parameter examined by the
-        software.
-    """
-
-    check_equal_pitches(protein_surface_big.surf, pocket_big)
-    check_equal_pitches(protein_surface_big.surf, pocket_small)
-    check_equal_pitches(protein_surface_small.surf, pocket_small)
-    grid_size = protein_surface_small.surf.pitch[0]
-    if protein_surface_big.solvent_rad == protein_surface_small.solvent_rad:
-        solvent_rad = protein_surface_big.solvent_rad
-    else:
-        raise ValueError("protein_surface_big and protein_surface_small have different solvent_rad values")
-
-    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u, solvent_rad=solvent_rad, grid_size=grid_size)
-    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u, solvent_rad=solvent_rad, grid_size=grid_size)
-    
-    pocket_big_mda_indices = []
-    for atom in pocket_atoms_frame_big:
-        pocket_big_mda_indices.append(atom.mda_atomgroup[0].index)
-
-    pocket_small_mda_indices = []
-    for atom in pocket_atoms_frame_small:
-        pocket_small_mda_indices.append(atom.mda_atomgroup[0].index)
-    
-    # Find out how much each atom moved between the two frames of interest.  This will
-    # be used to choose atoms that are unusually mobile or stationary.
-    indices_in_either_pocket = list(set(pocket_big_mda_indices + pocket_small_mda_indices))
-    dict_index_to_dist = {}
-    for atom_index in indices_in_either_pocket:
-        u.trajectory[traj_index_big]
-        frame_a_pos = u.atoms[atom_index].position
-        u.trajectory[traj_index_small]
-        frame_b_pos = u.atoms[atom_index].position
-        dist = math.dist(frame_a_pos, frame_b_pos)
-        dict_index_to_dist[atom_index] = dist
-        
-    # Find all atoms that moved more/less than most others.
-    dist_array = np.array(list(dict_index_to_dist.values()))
-    mean_dist = np.mean(dist_array)
-    std_dist = np.std(dist_array)
-    outlier_indices = []
-    print("mean and std dist", mean_dist, std_dist)
-    for index, dist in dict_index_to_dist.items():
-        if (dist > (mean_dist + std_dist)) or (dist < (mean_dist - 0.5*std_dist)):
-            print("outlier", index, dist, u.atoms[index].resid)
-            outlier_indices.append(index)
-            
-    # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.
-    pocket_small_edge = get_prot_pocket(protein_surface_small.surf, pocket_small)
-    dict_index_to_pocket_voxels = {}
-    for index in outlier_indices:
-        atom_sphere = protein_surface_small.dict_mda_index_to_atom_geo[index].voxel_sphere
-        this_atom_pocket_contribution = voxel_and(pocket_small_edge, atom_sphere)
-        if this_atom_pocket_contribution:
-            this_atom_num_surface_voxels = this_atom_pocket_contribution.filled_count
-            print(index, dict_index_to_dist[index], u.atoms[index].resid, this_atom_num_surface_voxels)
-            dict_index_to_pocket_voxels[index] = this_atom_num_surface_voxels
-    # Choose atoms with relatively high exposed surface area.
-    voxel_count_array = np.array(list(dict_index_to_pocket_voxels.values()))
-    mean_voxel_count = np.mean(voxel_count_array)
-    std_voxel_count = np.std(voxel_count_array)
-    print(mean_voxel_count, std_voxel_count)
-    key_moving_indices = []
-    key_stationary_indices = []
-    for index, voxel_count in dict_index_to_pocket_voxels.items():
-        if voxel_count > mean_voxel_count:
-            print("high voxel count", index, dict_index_to_dist[index], u.atoms[index].resid,
-                  u.atoms[index].name, voxel_count)
-            if dict_index_to_dist[index] > mean_dist:
-                key_moving_indices.append(index)
-            else:
-                key_stationary_indices.append(index)
-    # Iterate over pairs of atoms chosen above.  For each pair, find the distance
-    # between atoms in both frames of interest.  Use this to get the "relative difference"
-    # of how much the distance changes between the two frames.
-    def get_heavy_index(h_index):
-        h_atom = u.atoms[h_index]
-        if mda.topology.guessers.guess_atom_element(h_atom.type) != "H":
-            return h_index
-        heavy_atom = h_atom.bonded_atoms[0]
-        return heavy_atom.index
-    
-    dict_index_pair_to_rel_op_dist = {}
-    for moving_index in key_moving_indices:
-        if heavy_atoms:
-            moving_index = get_heavy_index(moving_index)
-        for stationary_index in key_stationary_indices:
-            if heavy_atoms:
-                stationary_index = get_heavy_index(stationary_index)
-                if stationary_index == moving_index:
-                    continue
-            u.trajectory[traj_index_big]
-            op_dist_frame_big = math.dist(u.atoms[moving_index].position,
-                                        u.atoms[stationary_index].position)
-            u.trajectory[traj_index_small]
-            op_dist_frame_small = math.dist(u.atoms[moving_index].position,
-                                        u.atoms[stationary_index].position)
-            # abs(x-y) / ((x+y)/2) = abs(x-y) / mean_value.
-            # See https://en.wikipedia.org/wiki/Relative_change_and_difference
-            rel_diff = abs(op_dist_frame_big - op_dist_frame_small) / ((op_dist_frame_big + op_dist_frame_small) / 2)
-            dict_index_pair_to_rel_op_dist[(moving_index, stationary_index)] = rel_diff
-        for other_moving_index in key_moving_indices:
-            if other_moving_index > moving_index: # The > avoids double-counting.
-                if heavy_atoms:
-                    other_moving_index = get_heavy_index(other_moving_index)
-                    if other_moving_index == moving_index:
-                        continue
-                u.trajectory[traj_index_big]
-                op_dist_frame_big = math.dist(u.atoms[moving_index].position,
-                                            u.atoms[other_moving_index].position)
-                u.trajectory[traj_index_small]
-                op_dist_frame_small = math.dist(u.atoms[moving_index].position,
-                                            u.atoms[other_moving_index].position)
-                # abs(x-y) / ((x+y)/2) = abs(x-y) / mean_value.
-                # See https://en.wikipedia.org/wiki/Relative_change_and_difference
-                rel_diff = abs(op_dist_frame_big - op_dist_frame_small) / ((op_dist_frame_big + op_dist_frame_small) / 2)
-                dict_index_pair_to_rel_op_dist[(moving_index, other_moving_index)] = rel_diff
-                
-    # Choose distances whose relative difference between the two frames is high.  For each of these
-    # distances, calculate the distance for every frame in the trajectory.  Find the correlation between
-    # the distance and pocket volume.
-    rel_op_dist_array = np.array(list(dict_index_pair_to_rel_op_dist.values()))
-    mean_rel_op_dist = np.mean(rel_op_dist_array)
-    std_rel_op_dist = np.std(rel_op_dist_array)
-    output_df_as_list = []
-    for index_pair, rel_op_dist in dict_index_pair_to_rel_op_dist.items():
-        index_a = index_pair[0]
-        index_b = index_pair[1]
-        if rel_op_dist > (mean_rel_op_dist + std_rel_op_dist):
-            dist_list = []
-            for frame in frames_for_volumes:
-                op_dist_this_frame = math.dist(u.atoms[index_a].position,
-                                               u.atoms[index_b].position)
-                dist_list.append(op_dist_this_frame)
-            pearson_r, p_value = scipy.stats.pearsonr(dist_list, volumes)
-            
-            row_of_df_as_list = [index_a, index_b, pearson_r, p_value,
-                                 u.atoms[index_a].name, u.atoms[index_a].resid,
-                                 u.atoms[index_b].name, u.atoms[index_b].resid,
-                                 rel_op_dist, dist_list]
-            output_df_as_list.append(row_of_df_as_list)
-
-    df = pd.DataFrame(output_df_as_list, columns =["Atom 1 index", "Atom 2 index",
-                                                   "Pearson of dists",
-                                                   "p-value for Pearson",
-                                                   "Atom 1 name", "Atom 1 residue",
-                                                   "Atom 2 name", "Atom 2 residue",
-                                                   "Rel. change in dist.", "Distances"])
-
-    return df
 
 
 def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.09, grid_size=0.7):
@@ -590,7 +341,6 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.0
     grid_size : float, optional
         The length (in Angstroms) of each side of a voxel.  The default
         value is 0.7.
-
     Returns
     -------
     list of AtomGeo objects
@@ -621,7 +371,6 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.0
 def write_voxels_to_pdb(voxel_grid, pdb_filename):
     """
     Write a VoxelGrid object to a PDB file.
-
     Each voxel is written as an atom of name "X".  The result can
     be viewed in PyMOL; users may want to use `set sphere_scale [radius]`
     where `radius` is 1/2 the voxel grid size.
@@ -648,7 +397,6 @@ def get_prot_pocket(protein_surf, pocket_surf):
         The protein
     pocket_surf : trimesh VoxelGrid object
         The pocket
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -669,7 +417,6 @@ def dilate_voxel_grid(voxel_grid):
     ----------
     voxel_grid : trimesh VoxelGrid object
         The input shape
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -712,7 +459,6 @@ def generate_voxelized_sphere(radius, center, grid_size):
     grid_size : float
         Length of a side of the voxel grid.  0.5 is a reasonable
         choice.
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -772,7 +518,6 @@ def generate_voxelized_box(lengths, center, grid_size):
     grid_size : float
         Length of a side of the voxel grid.  0.5 is a reasonable
         choice.
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -828,7 +573,6 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
         First shape to compare
     voxel_grid_2 : trimesh VoxelGrid object
         Second shape to compare
-
     Returns
     -------
     bool
@@ -861,7 +605,6 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
     voxel_grid_2 : trimesh VoxelGrid object
         Shape that is subtracted away.  Must have same pitch
         in each dimension (and same pitch as voxel_grid_1).
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -911,7 +654,6 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     voxel_grid_2 : trimesh VoxelGrid object
         Second shape to be combined.  Must have same pitch
         in each dimension (and same pitch as voxel_grid_1).
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -950,7 +692,6 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     voxel_grid_2 : trimesh VoxelGrid object
         Second shape to be combined.  Must have same pitch
         in each dimension (and same pitch as voxel_grid_1).
-
     Returns
     -------
     trimesh VoxelGrid object
@@ -1086,12 +827,12 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
 
 def show_one_prot(protein_surface, color="red", sel_regions=None):
     """Displays a voxelized protein in a Jupyter notebook.
-    
+
     Uses PyVista to show a proteins.  It is shown as being hollow; i.e. if
     users zoom past the surface they'll see the inside of the shape.
     The rest of the software package uses filled shapes, but this
     function displays them as hollow to decrease lag.
-    
+
     Parameters
     ----------
     protein_surface : ProteinSurface object
@@ -1117,12 +858,12 @@ def show_one_prot(protein_surface, color="red", sel_regions=None):
                     sel_region = sel_atom_geo.voxel_sphere
             non_sel_region = voxel_subtract(non_sel_region, sel_region)
             dict_sel_shape_to_color[sel_region] = sel_color
-    
+
     non_sel_vox = non_sel_region.copy()
     non_sel_vox.hollow()
     non_sel_trimesh = non_sel_vox.as_boxes()
     non_sel_pv = pv.wrap(non_sel_trimesh)
-    
+
     pl = pv.Plotter()
     pl.add_mesh(non_sel_pv, color=color)
     if sel_regions:
@@ -1143,7 +884,7 @@ def show_two_voxelgrids(voxelgrid_1, voxelgrid_2):
     users zoom past the surface they'll see the inside of the shape.
     The rest of the software package uses filled shapes, but this
     function displays them as hollow to decrease lag.
-    
+
     Parameters
     ----------
     voxelgrid_1 : trimesh VoxelGrid object
@@ -1161,7 +902,7 @@ def show_two_voxelgrids(voxelgrid_1, voxelgrid_2):
     voxelgrid_2.hollow()
     vg2_trimesh = voxelgrid_2.as_boxes()
     vg2_pv = pv.wrap(vg2_trimesh)
-    
+
     pl = pv.Plotter(shape=(2,2))
     pl.add_mesh(vg1_pv, color='red')
     pl.add_mesh(vg2_pv, color="blue")
@@ -1182,7 +923,7 @@ def show_proteinsurf_and_voxelgrid(protein_surface, voxel_grid, color_prot="red"
     users zoom past the surface they'll see the inside of the shape.
     The rest of the software package uses filled shapes, but this
     function displays them as hollow to decrease lag.
-    
+
     Parameters
     ----------
     protein_surface : ProteinSurface object
@@ -1212,18 +953,18 @@ def show_proteinsurf_and_voxelgrid(protein_surface, voxel_grid, color_prot="red"
                     sel_region = sel_atom_geo.voxel_sphere
             non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
             dict_sel_1_shape_to_color[sel_region] = sel_color
-    
-    
+
+
     non_sel_1_vox = non_sel_1_region.copy()
     non_sel_1_vox.hollow()
     non_sel_1_trimesh = non_sel_1_vox.as_boxes()
     non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
-    
+
     voxel_grid = voxel_grid.copy()
     voxel_grid.hollow()
     voxel_trimesh = voxel_grid.as_boxes()
     voxel_pv = pv.wrap(voxel_trimesh)
-    
+
     pl = pv.Plotter(shape=(2,2))
     pl.add_mesh(non_sel_1_pv, color=color_prot)
     if sel_regions:
@@ -1262,7 +1003,7 @@ def show_proteinsurf_and_two_voxelgrids(protein_surface, voxel_grid_1,
     users zoom past the surface they'll see the inside of the shape.
     The rest of the software package uses filled shapes, but this
     function displays them as hollow to decrease lag.
-    
+
     Parameters
     ----------
     protein_surface : ProteinSurface object
@@ -1296,23 +1037,22 @@ def show_proteinsurf_and_two_voxelgrids(protein_surface, voxel_grid_1,
                     sel_region = sel_atom_geo.voxel_sphere
             non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
             dict_sel_1_shape_to_color[sel_region] = sel_color
-    
-    
+
     non_sel_1_vox = non_sel_1_region.copy()
     non_sel_1_vox.hollow()
     non_sel_1_trimesh = non_sel_1_vox.as_boxes()
     non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
-    
+
     voxel_grid_1 = voxel_grid_1.copy()
     voxel_grid_1.hollow()
     voxel_1_trimesh = voxel_grid_1.as_boxes()
     voxel_1_pv = pv.wrap(voxel_1_trimesh)
-    
+
     voxel_grid_2 = voxel_grid_2.copy()
     voxel_grid_2.hollow()
     voxel_2_trimesh = voxel_grid_2.as_boxes()
     voxel_2_pv = pv.wrap(voxel_2_trimesh)
-    
+
     pl = pv.Plotter(shape=(2,2))
     pl.add_mesh(non_sel_1_pv, color=color_prot)
     if sel_regions:

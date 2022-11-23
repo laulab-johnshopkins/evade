@@ -1,23 +1,6 @@
-from .volume_finder import voxel_and
-from .volume_finder import AtomGeo
-from .volume_finder import ProteinSurface
-from .volume_finder import correlate_pockets
-from .volume_finder import compare_frames
-from .volume_finder import get_pocket_atoms
-from .volume_finder import write_voxels_to_pdb
-from .volume_finder import get_prot_pocket
-from .volume_finder import dilate_voxel_grid
-from .volume_finder import generate_voxelized_sphere
-from .volume_finder import generate_voxelized_box
-from .volume_finder import check_equal_pitches
-from .volume_finder import voxel_subtract
-from .volume_finder import voxel_or
-from .volume_finder import voxel_and
-from .volume_finder import compare_prots
-from .volume_finder import show_proteinsurf_and_voxelgrid
-from .volume_finder import show_one_prot
-from .volume_finder import align_to_pocket
-from .volume_finder import voxel_surf_from_numpy
-from .volume_finder import show_two_voxelgrids
-from .volume_finder import show_proteinsurf_and_two_voxelgrids
-from .volume_finder import get_largest_shape
+# This file could be blank, in which case the user would need
+# to individually import each file (e.g. `import volume_finder.volumes`).
+
+from . import volumes
+from . import ops_from_volumes
+from . import dihedrals
