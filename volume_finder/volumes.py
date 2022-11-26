@@ -161,7 +161,7 @@ vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8, "SE" : 1.9, 
 
 
 def align_to_pocket(protein_surf, pocket_shape, universe,
-                    copy_filename, frame_to_align_to, psf_loc=None):
+                    copy_filename, frame_to_align_to, psf_loc=None, step=None, start=None, stop=None):
     """Align an MD trajectory to the coordinates of a pocket.
 
     Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
@@ -188,6 +188,18 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     psf_loc : string, optional
         If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.  If
         `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default value is `None`.)
+    step : integer or `None`, optional
+        This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
+        aligning every frame; a value of 2 would lead to aligning every other frame.  (Skipped frames are
+        not included in the output universe.)  The default value of `None` behaves identically to a value of 1.
+    start : integer or `None`, optional
+        This controls which frame to start with.  Frames before `start` are not included in the output universe.
+        The default value of `None` causes the code to start at the first frame.
+    stop : integer or `None`, optional
+        This controls which frame to end with.  Frames at or after `stop` are not included in the output universe.
+        E.g. if `stop=10` and `start=None`, then the trajectory will include the first 10 frames (indices 0-9).
+        The default value of `None` causes the code to go until the end of the trajectory.
+
     Returns
     -------
     MDAnalysis universe
@@ -199,8 +211,7 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     solvent_rad = protein_surf.solvent_rad
     # Determine which atoms are in the pocket.
     pocket_atoms_list, pocket_atoms_surf = get_pocket_atoms(protein_surf, pocket_shape,
-                                                            universe, solvent_rad,
-                                                            grid_size)
+                                                            universe)
     pocket_mda_indices = []
     for atom in pocket_atoms_list:
         pocket_mda_indices.append(atom.mda_atomgroup[0].index)
@@ -218,7 +229,8 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
 
     # Align the trajectory.
     u_copy.trajectory[frame_to_align_to]
-    mda.analysis.align.AlignTraj(u_copy, universe, select=sel_str, filename=copy_filename).run()
+    mda.analysis.align.AlignTraj(u_copy, universe, select=sel_str,
+                                 filename=copy_filename).run(step=step, start=start, stop=stop)
     if psf_loc:
         u_copy=mda.Universe(psf_loc, copy_filename)
     else:
@@ -320,7 +332,7 @@ def voxel_surf_from_numpy(data_loc, grid_size):
     return surf
 
 
-def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.09, grid_size=0.7):
+def get_pocket_atoms(protein_surface_obj, pocket_surf, universe):
     """
     Get all protein atoms that border the pocket.
     
@@ -333,14 +345,7 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.0
         The pocket.
     universe : MDAnalysis universe
         The universe object that the data are taken from.
-    solvent_rad : float, optional
-        The protein surface is constructed from the protein atoms'
-        van der Waals radii plus the radius of a hypothetical solvent molecule.
-        The default value is 1.09 (the van der Waals radius of hydrogen); this was
-        chosen because POVME uses this value.
-    grid_size : float, optional
-        The length (in Angstroms) of each side of a voxel.  The default
-        value is 0.7.
+
     Returns
     -------
     list of AtomGeo objects
@@ -348,6 +353,7 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe, solvent_rad=1.0
     ProteinSurface object
         A surface containing all atoms bordering the pocket.
     """
+
     pocket_atoms = []
     for atom_geo in protein_surface_obj.atom_geo_list:
         atom_dilated = dilate_voxel_grid(atom_geo.voxel_sphere)
@@ -382,6 +388,7 @@ def write_voxels_to_pdb(voxel_grid, pdb_filename):
     pdb_filename : string ending in ".pdb"
         The file to write.
     """
+
     universe_voxel = mda.Universe.empty(len(voxel_grid.points), trajectory=True)
     universe_voxel.atoms.positions = voxel_grid.points
     universe_voxel.atoms.write(pdb_filename)
@@ -402,6 +409,7 @@ def get_prot_pocket(protein_surf, pocket_surf):
     trimesh VoxelGrid object
         A VoxelGrid containing voxels in protein_surf that border protein_surf
     """
+
     dilated_pocket = dilate_voxel_grid(pocket_surf)
     return voxel_and(protein_surf, dilated_pocket)
 
@@ -422,6 +430,7 @@ def dilate_voxel_grid(voxel_grid):
     trimesh VoxelGrid object
         The dilated shape
     """
+
     # The function doesn't know whether the outer edges of
     # voxel_grid contain any filled points.  If they do,
     # scipy's binary_dilation won't expand the input matrix's
@@ -697,7 +706,7 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     trimesh VoxelGrid object
         A VoxelGrid with all points from both voxel_grid_1 and voxel_grid_2
     """ 
-    
+
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     
     vox_1_and_2_points = npi.intersection(voxel_grid_1.points, voxel_grid_2.points)

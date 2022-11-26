@@ -52,14 +52,14 @@
 <li><p><strong>corr_cutoff</strong> (<em>float</em>) – The minimum correlation strength needed for the correlation to be displayed.  The function takes the
 absolute value of the correlations to consider both positive and negative correlations as significant;
 thus <cite>corr_cutoff</cite> should be positive.</p></li>
-<li><p><strong>Modifies</strong> – </p></li>
-<li><p><strong>--------</strong> – </p></li>
-<li><p><strong>nglview_widget</strong> – A sphere is drawn at each key atom’s position.  A line is drawn between each shown correlation.  The line
-thickness is determined by correlation strength.  Hovering the mouse over a line causes it to display info
-about the correlation.</p></li>
 </ul>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>The function modifies the input object <cite>nglview_widget</cite>, as described below:</p>
+<p>A sphere is drawn at each key atom’s position.  A line is drawn between each shown correlation.  The line
+thickness is determined by correlation strength.  Hovering the mouse over a line causes it to display info
+about the correlation.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -242,6 +242,7 @@ Rows are the dihedral value at each studied time point.</p>
 <dt class="sig sig-object py" id="volume_finder.ops_from_volumes.compare_frames">
 <span class="sig-prename descclassname"><span class="pre">volume_finder.ops_from_volumes.</span></span><span class="sig-name descname"><span class="pre">compare_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">traj_index_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traj_index_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_surface_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_big</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_small</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_for_volumes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heavy_atoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.ops_from_volumes.compare_frames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get order parameters that quantify the conformational change between two pockets.</p>
+<p>Each order parameter is a distance between two atoms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -270,6 +271,30 @@ default value of heavy_atoms is True.</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A DataFrame with information about each order parameter examined by the
 software.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pandas DataFrame</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A DataFrame with information about each order parameter examined by the
+software.  There are quite a few columns; the most interesting are:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;Atom</span> <span class="pre">1</span> <span class="pre">index&quot;</span></code></dt><dd><p>0-indexed atom index of an atom in the pair.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;Atom</span> <span class="pre">2</span> <span class="pre">index&quot;</span></code></dt><dd><p>0-indexed atom index of the other atom in the pair.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;Pearson</span> <span class="pre">of</span> <span class="pre">dists&quot;</span></code></dt><dd><p>Pearson coefficient between the atom-atom distance and the pocket volume
+over all frames in <cite>frames_for_volumes</cite>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;p-value</span> <span class="pre">for</span> <span class="pre">Pearson&quot;</span></code></dt><dd><p>p-value for the Pearson coefficient.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;Rel.</span> <span class="pre">change</span> <span class="pre">in</span> <span class="pre">dist.&quot;</span></code></dt><dd><p>The change in atom-atom distance between the two frames of interest, processed
+based on distance magnitude according to <a class="reference external" href="https://en.wikipedia.org/wiki/Relative_change_and_difference">https://en.wikipedia.org/wiki/Relative_change_and_difference</a>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;Distances&quot;</span></code></dt><dd><p>The atom-atom distance at each studied frame.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Pandas DataFrame</p>
@@ -408,7 +433,7 @@ solvent-accessible surface area.  This value should not be changed after object 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volumes.align_to_pocket">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.volumes.</span></span><span class="sig-name descname"><span class="pre">align_to_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_to_align_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psf_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volumes.align_to_pocket" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volumes.</span></span><span class="sig-name descname"><span class="pre">align_to_pocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frame_to_align_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psf_loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volumes.align_to_pocket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Align an MD trajectory to the coordinates of a pocket.</p>
 <p>Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
 Global alignment can be too imprecise for this; it’s best to align the trajectory to the pocket.  The
@@ -428,6 +453,14 @@ If it is a DCD, then <cite>psf_loc</cite> must also be given.</p></li>
 come from this frame.</p></li>
 <li><p><strong>psf_loc</strong> (<em>string</em><em>, </em><em>optional</em>) – If <cite>copy_filename</cite> is a DCD file, then MDAnalysis also needs a PSF file to read the data.  If
 <cite>copy_filename</cite> is a PDB file, then <cite>psf_loc</cite> should not be provided.  (The default value is <cite>None</cite>.)</p></li>
+<li><p><strong>step</strong> (integer or <cite>None</cite>, optional) – This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
+aligning every frame; a value of 2 would lead to aligning every other frame.  (Skipped frames are
+not included in the output universe.)  The default value of <cite>None</cite> behaves identically to a value of 1.</p></li>
+<li><p><strong>start</strong> (integer or <cite>None</cite>, optional) – This controls which frame to start with.  Frames before <cite>start</cite> are not included in the output universe.
+The default value of <cite>None</cite> causes the code to start at the first frame.</p></li>
+<li><p><strong>stop</strong> (integer or <cite>None</cite>, optional) – This controls which frame to end with.  Frames at or after <cite>stop</cite> are not included in the output universe.
+E.g. if <cite>stop=10</cite> and <cite>start=None</cite>, then the trajectory will include the first 10 frames (indices 0-9).
+The default value of <cite>None</cite> causes the code to go until the end of the trajectory.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -579,7 +612,7 @@ VoxelGrid.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="volume_finder.volumes.get_pocket_atoms">
-<span class="sig-prename descclassname"><span class="pre">volume_finder.volumes.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solvent_rad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.09</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volumes.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">volume_finder.volumes.</span></span><span class="sig-name descname"><span class="pre">get_pocket_atoms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protein_surface_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pocket_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universe</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#volume_finder.volumes.get_pocket_atoms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all protein atoms that border the pocket.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -588,12 +621,6 @@ VoxelGrid.</p>
 the ProteinSurface type defined in this software.</p></li>
 <li><p><strong>pocket_surf</strong> (<em>trimesh VoxelGrod</em>) – The pocket.</p></li>
 <li><p><strong>universe</strong> (<em>MDAnalysis universe</em>) – The universe object that the data are taken from.</p></li>
-<li><p><strong>solvent_rad</strong> (<em>float</em><em>, </em><em>optional</em>) – The protein surface is constructed from the protein atoms’
-van der Waals radii plus the radius of a hypothetical solvent molecule.
-The default value is 1.09 (the van der Waals radius of hydrogen); this was
-chosen because POVME uses this value.</p></li>
-<li><p><strong>grid_size</strong> (<em>float</em><em>, </em><em>optional</em>) – The length (in Angstroms) of each side of a voxel.  The default
-value is 0.7.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -859,7 +886,7 @@ where <cite>radius</cite> is 1/2 the voxel grid size.</p>
 <h3>Navigation</h3>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="new.html">title here</a></li>
+<li class="toctree-l1"><a class="reference internal" href="get_volumes.html">Calculating Pocket Volumes</a></li>
 </ul>
 
 <div class="relations">

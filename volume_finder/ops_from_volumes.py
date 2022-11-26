@@ -54,6 +54,8 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                    frames_for_volumes, heavy_atoms=True):
     """
     Get order parameters that quantify the conformational change between two pockets.
+
+    Each order parameter is a distance between two atoms.
     
     Parameters
     ----------
@@ -92,6 +94,26 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     Pandas DataFrame
         A DataFrame with information about each order parameter examined by the
         software.
+    Returns
+    -------
+    Pandas DataFrame
+        A DataFrame with information about each order parameter examined by the
+        software.  There are quite a few columns; the most interesting are:
+
+        ``"Atom 1 index"``
+            0-indexed atom index of an atom in the pair.
+        ``"Atom 2 index"``
+            0-indexed atom index of the other atom in the pair.
+        ``"Pearson of dists"``
+            Pearson coefficient between the atom-atom distance and the pocket volume
+            over all frames in `frames_for_volumes`.
+        ``"p-value for Pearson"``
+            p-value for the Pearson coefficient.
+        ``"Rel. change in dist."``
+            The change in atom-atom distance between the two frames of interest, processed
+            based on distance magnitude according to https://en.wikipedia.org/wiki/Relative_change_and_difference.
+        ``"Distances"``
+            The atom-atom distance at each studied frame.
     """
 
     check_equal_pitches(protein_surface_big.surf, pocket_big)
@@ -103,8 +125,8 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     else:
         raise ValueError("protein_surface_big and protein_surface_small have different solvent_rad values")
 
-    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u, solvent_rad=solvent_rad, grid_size=grid_size)
-    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u, solvent_rad=solvent_rad, grid_size=grid_size)
+    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u)
+    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u)
     
     pocket_big_mda_indices = []
     for atom in pocket_atoms_frame_big:
@@ -131,10 +153,13 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     mean_dist = np.mean(dist_array)
     std_dist = np.std(dist_array)
     outlier_indices = []
-    print("mean and std dist", mean_dist, std_dist)
+    print("Mean distance moved by pocket atoms between two selected frames:", mean_dist)
+    print("standard deviation of this distance:", std_dist)
+    print("Listing exceptionally mobile/still atoms:")
     for index, dist in dict_index_to_dist.items():
         if (dist > (mean_dist + std_dist)) or (dist < (mean_dist - 0.5*std_dist)):
-            print("outlier", index, dist, u.atoms[index].resid)
+            print("atom index:", index, "movement between frames:", dist,
+                  "residue:", u.atoms[index].resid)
             outlier_indices.append(index)
             
     # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.

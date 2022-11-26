@@ -235,7 +235,7 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, dict_i
     plt.show()
     
 
-    
+    # FIXME why is prot_atoms highlighted?
     resindex = atom.resindex
     residuegroup = prot_atoms.residues[resindex : resindex+1]
     best_above_thresh_name = None
@@ -400,12 +400,13 @@ def add_correlated_dihedrals(nglview_widget, u, corr_mat, corr_cutoff):
         absolute value of the correlations to consider both positive and negative correlations as significant;
         thus `corr_cutoff` should be positive.
 
-    Modifies
-    --------
-    nglview_widget
-        A sphere is drawn at each key atom's position.  A line is drawn between each shown correlation.  The line
-        thickness is determined by correlation strength.  Hovering the mouse over a line causes it to display info
-        about the correlation.
+    Notes
+    -----
+    The function modifies the input object `nglview_widget`, as described below:
+
+    A sphere is drawn at each key atom's position.  A line is drawn between each shown correlation.  The line
+    thickness is determined by correlation strength.  Hovering the mouse over a line causes it to display info
+    about the correlation.
     """
 
     corr_cutoff = abs(corr_cutoff)
