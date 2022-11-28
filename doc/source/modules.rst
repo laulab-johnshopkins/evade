@@ -1,8 +1,8 @@
-volume_finder
-=============
+SCOOPS
+======
 
 .. toctree::
    :maxdepth: 4
 
    setup
-   volume_finder
+   scoops
