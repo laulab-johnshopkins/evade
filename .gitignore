@@ -1,7 +1,7 @@
 __pycache__
 .ipynb_checkpoints
-volume_finder.egg-info
+scoops.egg-info
 build
-volume_finder/__pycache__
+scoops/__pycache__
 aligned.pdb
 .DS_STORE
