@@ -6,8 +6,11 @@
 Welcome to volume_finder's documentation!
 =========================================
 
-This software finds the volume of a pocket in an MD trajectory.
-To see how to use it, read the example Jupyter notebook.
+This software contains tools to analyze binding site dynamics and allostery.
+It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances
+as order parameters, and correlate an order parameter with dihedral motion.  Source code
+can be found `here <https://github.com/DanielJamesEvans/volume_finder>`_.
+To see how to use the code, read the example Jupyter notebook that is included with the source code.
 
 
 .. toctree::

@@ -1,0 +1,2 @@
+# SCOOPS
+SCOOPS  contains tools to analyze binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.

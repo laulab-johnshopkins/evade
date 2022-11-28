@@ -4,3 +4,4 @@ volume_finder.egg-info
 build
 volume_finder/__pycache__
 aligned.pdb
+.DS_STORE
