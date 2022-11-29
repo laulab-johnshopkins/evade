@@ -6,7 +6,7 @@
 Welcome to SCOOPS's documentation!
 =========================================
 
-This software contains tools to analyze binding site dynamics and allostery.
+This software analyzes binding site dynamics and allostery.
 It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances
 as order parameters, and correlate an order parameter with dihedral motion.  Source code
 can be found `here <https://github.com/DanielJamesEvans/scoops>`_.
@@ -17,6 +17,7 @@ To see how to use the code, read the Jupyter notebook in the ``example`` directo
    :maxdepth: 1
    :caption: Contents:
 
+   visualization.rst
    troubleshooting.rst
 
 Indices and tables

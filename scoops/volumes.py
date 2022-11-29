@@ -834,179 +834,12 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
     pl.show()
 
 
-def show_one_prot(protein_surface, color="red", sel_regions=None):
-    """Displays a voxelized protein in a Jupyter notebook.
-
-    Uses PyVista to show a proteins.  It is shown as being hollow; i.e. if
-    users zoom past the surface they'll see the inside of the shape.
-    The rest of the software package uses filled shapes, but this
-    function displays them as hollow to decrease lag.
-
-    Parameters
-    ----------
-    protein_surface : ProteinSurface object
-        The protein to be displayed.
-    color : string, optional
-        The color of regions not described by sel_regions.
-        The default value is "red".
-    sel_regions : dictionary mapping MDAnalysis AtomGroups to strings
-        The colors for selected regions of the protein.  Large selections slow
-        the initial rendering.
-    """ 
-
-    dict_sel_shape_to_color = {}
-    non_sel_region = protein_surface.surf
-    if sel_regions:
-        for sel_region_mda, sel_color in sel_regions.items():
-            sel_region = None # initialization
-            for selected_atom in sel_region_mda:
-                sel_atom_geo = protein_surface.dict_mda_index_to_atom_geo[selected_atom.index]
-                if sel_region:
-                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
-                else:
-                    sel_region = sel_atom_geo.voxel_sphere
-            non_sel_region = voxel_subtract(non_sel_region, sel_region)
-            dict_sel_shape_to_color[sel_region] = sel_color
-
-    non_sel_vox = non_sel_region.copy()
-    non_sel_vox.hollow()
-    non_sel_trimesh = non_sel_vox.as_boxes()
-    non_sel_pv = pv.wrap(non_sel_trimesh)
-
-    pl = pv.Plotter()
-    pl.add_mesh(non_sel_pv, color=color)
-    if sel_regions:
-        for sel_region, color in dict_sel_shape_to_color.items():
-            sel_vox = sel_region.copy()
-            sel_vox.hollow()
-            sel_trimesh = sel_vox.as_boxes()
-            sel_pv = pv.wrap(sel_trimesh)
-            pl.add_mesh(sel_pv, color=color)
-    pl.show()
-
-
-def show_two_voxelgrids(voxelgrid_1, voxelgrid_2):
-    """Displays two trimesh VoxelGrids in a Jupyter notebook.
-    
-    Uses PyVista to show both the voxelgrids.
-    The objects are shown as being hollow; i.e. if
-    users zoom past the surface they'll see the inside of the shape.
-    The rest of the software package uses filled shapes, but this
-    function displays them as hollow to decrease lag.
-
-    Parameters
-    ----------
-    voxelgrid_1 : trimesh VoxelGrid object
-        The first VoxelGrid
-    voxelgrid_2 : trimesh VoxelGrid object
-        The second VoxelGrid
-    """ 
-
-    voxelgrid_1 = voxelgrid_1.copy()
-    voxelgrid_1.hollow()
-    vg1_trimesh = voxelgrid_1.as_boxes()
-    vg1_pv = pv.wrap(vg1_trimesh)
-
-    voxelgrid_2 = voxelgrid_2.copy()
-    voxelgrid_2.hollow()
-    vg2_trimesh = voxelgrid_2.as_boxes()
-    vg2_pv = pv.wrap(vg2_trimesh)
-
-    pl = pv.Plotter(shape=(2,2))
-    pl.add_mesh(vg1_pv, color='red')
-    pl.add_mesh(vg2_pv, color="blue")
-    pl.subplot(0,1)
-    pl.add_mesh(vg1_pv, color="red")
-    pl.subplot(1,0)
-    pl.add_mesh(vg2_pv, color='blue')
-    pl.link_views()
-    pl.show()
-
-def show_proteinsurf_and_voxelgrid(protein_surface, voxel_grid, color_prot="red", sel_regions=None,
-                            color_voxels="blue"):
-    """Displays a ProteinSurface and a VoxelGrid in a Jupyter notebook.
-    
-    Uses PyVista to show two objects.  They are shown together,
-    and each object is shown separately.
-    The objects are shown as being hollow; i.e. if
-    users zoom past the surface they'll see the inside of the shape.
-    The rest of the software package uses filled shapes, but this
-    function displays them as hollow to decrease lag.
-
-    Parameters
-    ----------
-    protein_surface : ProteinSurface object
-        The ProteinSurface to be displayed.
-    voxel_grid : trimest VoxelGrid object
-        The VoxelGrid to be displayed.
-    color_prot : string, optional
-        The color of the ProteinSurface (except for any regions specified in sel_regions).
-        The default value is "red".
-    sel_regions : dictionary mapping MDAnalysis AtomGroups to strings
-        The colors for selected regions of the ProteinSurface.  Large selections slow
-        the initial rendering.
-    color_voxels : string, optional
-        The color of the VoxelGrid.  The default value is "blue".
-    """ 
-
-    dict_sel_1_shape_to_color = {}
-    non_sel_1_region = protein_surface.surf
-    if sel_regions:
-        for sel_region_mda, sel_color in sel_regions.items():
-            sel_region = None # initialization
-            for selected_atom in sel_region_mda:
-                sel_atom_geo = protein_surface.dict_mda_index_to_atom_geo[selected_atom.index]
-                if sel_region:
-                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
-                else:
-                    sel_region = sel_atom_geo.voxel_sphere
-            non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
-            dict_sel_1_shape_to_color[sel_region] = sel_color
-
-
-    non_sel_1_vox = non_sel_1_region.copy()
-    non_sel_1_vox.hollow()
-    non_sel_1_trimesh = non_sel_1_vox.as_boxes()
-    non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
-
-    voxel_grid = voxel_grid.copy()
-    voxel_grid.hollow()
-    voxel_trimesh = voxel_grid.as_boxes()
-    voxel_pv = pv.wrap(voxel_trimesh)
-
-    pl = pv.Plotter(shape=(2,2))
-    pl.add_mesh(non_sel_1_pv, color=color_prot)
-    if sel_regions:
-        for sel_region, color in dict_sel_1_shape_to_color.items():
-            sel_vox = sel_region.copy()
-            sel_vox.hollow()
-            sel_trimesh = sel_vox.as_boxes()
-            sel_pv = pv.wrap(sel_trimesh)
-            pl.add_mesh(sel_pv, color=color)
-    pl.add_mesh(voxel_pv, color=color_voxels)
-    pl.subplot(0,1)
-    pl.add_mesh(non_sel_1_pv, color=color_prot)
-    if sel_regions:
-        for sel_region, color in dict_sel_1_shape_to_color.items():
-            sel_vox = sel_region.copy()
-            sel_vox.hollow()
-            sel_trimesh = sel_vox.as_boxes()
-            sel_pv = pv.wrap(sel_trimesh)
-            pl.add_mesh(sel_pv, color=color)
-    pl.subplot(1,0)
-    pl.add_mesh(voxel_pv, color=color_voxels)
-    pl.link_views()
-    pl.show()
-
-
-def show_proteinsurf_and_two_voxelgrids(protein_surface, voxel_grid_1,
-                                        voxel_grid_2, color_prot="red",
-                                        sel_regions=None, color_voxels_1="blue",
-                                        color_voxels_2="green"):
+def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color_2="blue", color_3="green",
+                    sel_regions_1=None, sel_regions_2=None, sel_regions_3=None):
                                         
-    """Displays a ProteinSurface and two VoxelGrids in a Jupyter notebook.
+    """Displays 1 to 3 objects (ProteinSurface and/or VoxelGrid) in a Jupyter notebook.
     
-    Uses PyVista to show two objects.  They are shown together,
+    Uses PyVista to show up to three objects.  They are shown together,
     and each object is shown separately.
     The objects are shown as being hollow; i.e. if
     users zoom past the surface they'll see the inside of the shape.
@@ -1015,76 +848,215 @@ def show_proteinsurf_and_two_voxelgrids(protein_surface, voxel_grid_1,
 
     Parameters
     ----------
-    protein_surface : ProteinSurface object
-        The ProteinSurface to be displayed.
-    voxel_grid_1 : trimest VoxelGrid object
-        A VoxelGrid to be displayed.
-    voxel_grid_2 : trimest VoxelGrid object
-        A VoxelGrid to be displayed.
-    color_prot : string, optional
-        The color of the ProteinSurface (except for any regions specified in sel_regions).
+    object_1 : SCOOPS ProteinSurface or trimesh VoxelGrid
+        An object to be displayed.
+    object_2: SCOOPS ProteinSurface or trimesh VoxelGrid, optional
+        Another object to be displayed.  The default is `None`, meaning that no object
+        is passed for display.
+    object_3: SCOOPS ProteinSurface or trimesh VoxelGrid, optional
+        Another object to be displayed.  The default is `None`, meaning that no object
+        is passed for display.
+    color_1 : string, optional
+        The color of the first object (except for any regions specified in sel_regions_1).
         The default value is "red".
-    sel_regions : dictionary mapping MDAnalysis AtomGroups to strings
-        The colors for selected regions of the ProteinSurface.  Large selections slow
-        the initial rendering.
-    color_voxels_1 : string, optional
-        The color of the first VoxelGrid.  The default value is "blue".
-    color_voxels_2 : string, optional
-        The color of the second VoxelGrid.  The default value is "green".
-    """ 
+    color_2 : string, optional
+        The color of the second object (except for any regions specified in sel_regions_2).
+        The default value is "blue".
+    color_3 : string, optional
+        The color of the third object (except for any regions specified in sel_regions_3).
+        The default value is "green".
+    sel_regions_1 : dictionary mapping MDAnalysis AtomGroups to color-name strings, optional
+        The colors for selected regions of object_1.
+        E.g. `{u.select_atoms("resid 100") : "yellow", u.select_atoms("resid 20") : "black"}`.
+        Can only be used if object_1 is a ProteinSurface.  Large selections slow
+        the initial rendering.  The default value is `None`.
+    sel_regions_2 : dictionary mapping MDAnalysis AtomGroups to color-name strings, optional
+        The colors for selected regions of object_2.  See the `sel_regions_1` description for
+        more info.
+    sel_regions_3 : dictionary mapping MDAnalysis AtomGroups to color-name strings, optional
+        The colors for selected regions of object_3.  See the `sel_regions_1` description for
+        more info.
+    """
 
-    dict_sel_1_shape_to_color = {}
-    non_sel_1_region = protein_surface.surf
-    if sel_regions:
-        for sel_region_mda, sel_color in sel_regions.items():
-            sel_region = None # initialization
-            for selected_atom in sel_region_mda:
-                sel_atom_geo = protein_surface.dict_mda_index_to_atom_geo[selected_atom.index]
-                if sel_region:
-                    sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
-                else:
-                    sel_region = sel_atom_geo.voxel_sphere
-            non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
-            dict_sel_1_shape_to_color[sel_region] = sel_color
+    # If object_1 is a ProteinSurface, then the user can select regions of it to have different colors.
+    if type(object_1) == ProteinSurface:
+        dict_sel_1_shape_to_color = {}
+        non_sel_1_region = object_1.surf
+        if sel_regions_1:
+            for sel_region_mda, sel_color in sel_regions_1.items():
+                sel_region = None # initialization
+                for selected_atom in sel_region_mda:
+                    sel_atom_geo = object_1.dict_mda_index_to_atom_geo[selected_atom.index]
+                    if sel_region:
+                        sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                    else:
+                        sel_region = sel_atom_geo.voxel_sphere
+                non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
+                dict_sel_1_shape_to_color[sel_region] = sel_color
+    # Users can't select regions of VoxelGrids.
+    elif type(object_1) == trimesh.voxel.base.VoxelGrid:
+        non_sel_1_region = object_1
+        if sel_regions_1:
+            raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_1 must be None.")
+    # If object_1 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
+    else:
+         raise TypeError("object_1 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid.")
 
+    # Convert object_1 to PyVista
     non_sel_1_vox = non_sel_1_region.copy()
     non_sel_1_vox.hollow()
     non_sel_1_trimesh = non_sel_1_vox.as_boxes()
     non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
-
-    voxel_grid_1 = voxel_grid_1.copy()
-    voxel_grid_1.hollow()
-    voxel_1_trimesh = voxel_grid_1.as_boxes()
-    voxel_1_pv = pv.wrap(voxel_1_trimesh)
-
-    voxel_grid_2 = voxel_grid_2.copy()
-    voxel_grid_2.hollow()
-    voxel_2_trimesh = voxel_grid_2.as_boxes()
-    voxel_2_pv = pv.wrap(voxel_2_trimesh)
-
-    pl = pv.Plotter(shape=(2,2))
-    pl.add_mesh(non_sel_1_pv, color=color_prot)
-    if sel_regions:
+    if sel_regions_1:
+        sel_1_pvs_and_colors = [] # list of lists because pv objects are unhashable (can't be dict keys)
         for sel_region, color in dict_sel_1_shape_to_color.items():
             sel_vox = sel_region.copy()
             sel_vox.hollow()
             sel_trimesh = sel_vox.as_boxes()
             sel_pv = pv.wrap(sel_trimesh)
+            sel_1_pvs_and_colors.append([sel_pv, color])
+
+    # object_2 and object_3 are handled the same way as object_1, except that they may be None.
+
+    # If object_2 is a ProteinSurface, then the user can select regions of it to have different colors.
+    if object_2 and type(object_2) == ProteinSurface:
+        dict_sel_2_shape_to_color = {}
+        non_sel_2_region = object_2.surf
+        if sel_regions_2:
+            for sel_region_mda, sel_color in sel_regions_2.items():
+                sel_region = None # initialization
+                for selected_atom in sel_region_mda:
+                    sel_atom_geo = object_2.dict_mda_index_to_atom_geo[selected_atom.index]
+                    if sel_region:
+                        sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                    else:
+                        sel_region = sel_atom_geo.voxel_sphere
+                non_sel_2_region = voxel_subtract(non_sel_2_region, sel_region)
+                dict_sel_2_shape_to_color[sel_region] = sel_color
+    # Users can't select regions of VoxelGrids.
+    elif object_2 and type(object_2) == trimesh.voxel.base.VoxelGrid:
+        non_sel_2_region = object_2
+        if sel_regions_2:
+            raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_2 must be None.")
+    # If object_2 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
+    elif object_2:
+         raise TypeError("object_2 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+
+    # Convert object_2 to PyVista
+    if object_2:
+        non_sel_2_vox = non_sel_2_region.copy()
+        non_sel_2_vox.hollow()
+        non_sel_2_trimesh = non_sel_2_vox.as_boxes()
+        non_sel_2_pv = pv.wrap(non_sel_2_trimesh)
+        if sel_regions_2:
+            sel_2_pvs_and_colors = []
+            for sel_region, color in dict_sel_2_shape_to_color.items():
+                sel_vox = sel_region.copy()
+                sel_vox.hollow()
+                sel_trimesh = sel_vox.as_boxes()
+                sel_pv = pv.wrap(sel_trimesh)
+                sel_2_pvs_and_colors.append([sel_pv, color])
+
+    # If object_3 is a ProteinSurface, then the user can select regions of it to have different colors.
+    if object_3 and type(object_3) == ProteinSurface:
+        dict_sel_3_shape_to_color = {}
+        non_sel_3_region = object_3.surf
+        if sel_regions_3:
+            for sel_region_mda, sel_color in sel_regions_3.items():
+                sel_region = None # initialization
+                for selected_atom in sel_region_mda:
+                    sel_atom_geo = object_3.dict_mda_index_to_atom_geo[selected_atom.index]
+                    if sel_region:
+                        sel_region = voxel_or(sel_region, sel_atom_geo.voxel_sphere)
+                    else:
+                        sel_region = sel_atom_geo.voxel_sphere
+                non_sel_3_region = voxel_subtract(non_sel_3_region, sel_region)
+                dict_sel_3_shape_to_color[sel_region] = sel_color
+    # Users can't select regions of VoxelGrids.
+    elif object_3 and type(object_3) == trimesh.voxel.base.VoxelGrid:
+        non_sel_3_region = object_3
+        if sel_regions_3:
+            raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_3 must be None.")
+    # If object_3 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
+    elif object_3:
+         raise TypeError("object_3 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+
+    # Convert object_3 to PyVista
+    if object_3:
+        non_sel_3_vox = non_sel_3_region.copy()
+        non_sel_3_vox.hollow()
+        non_sel_3_trimesh = non_sel_3_vox.as_boxes()
+        non_sel_3_pv = pv.wrap(non_sel_3_trimesh)
+        if sel_regions_3:
+            sel_3_pvs_and_colors = []
+            for sel_region, color in dict_sel_3_shape_to_color.items():
+                sel_vox = sel_region.copy()
+                sel_vox.hollow()
+                sel_trimesh = sel_vox.as_boxes()
+                sel_pv = pv.wrap(sel_trimesh)
+                sel_3_pvs_and_colors.append([sel_pv, color])
+
+    # Create a window with multiple subplots if >1 object is shown.
+    if (object_2 is None) and (object_3 is None):
+        pl = pv.Plotter()
+    else:
+        pl = pv.Plotter(shape=(2,2))
+
+    # Graph the first subplot.
+    pl.add_mesh(non_sel_1_pv, color=color_1)
+    if sel_regions_1:
+        for pv_and_color in sel_1_pvs_and_colors:
+            sel_pv = pv_and_color[0]
+            color = pv_and_color[1]
             pl.add_mesh(sel_pv, color=color)
-    pl.add_mesh(voxel_1_pv, color=color_voxels_1)
-    pl.add_mesh(voxel_2_pv, color=color_voxels_2)
-    pl.subplot(0,1)
-    pl.add_mesh(non_sel_1_pv, color=color_prot)
-    if sel_regions:
-        for sel_region, color in dict_sel_1_shape_to_color.items():
-            sel_vox = sel_region.copy()
-            sel_vox.hollow()
-            sel_trimesh = sel_vox.as_boxes()
-            sel_pv = pv.wrap(sel_trimesh)
-            pl.add_mesh(sel_pv, color=color)
-    pl.subplot(1,0)
-    pl.add_mesh(voxel_1_pv, color=color_voxels_1)
-    pl.subplot(1,1)
-    pl.add_mesh(voxel_2_pv, color=color_voxels_2)
-    pl.link_views()
+    
+    if object_2:
+        pl.add_mesh(non_sel_2_pv, color=color_2)
+        if sel_regions_2:
+            for pv_and_color in sel_2_pvs_and_colors:
+                sel_pv = pv_and_color[0]
+                color = pv_and_color[1]
+                pl.add_mesh(sel_pv, color=color)
+
+    if object_3:
+        pl.add_mesh(non_sel_3_pv, color=color_3)
+        if sel_regions_3:
+            for pv_and_color in sel_3_pvs_and_colors:
+                sel_pv = pv_and_color[0]
+                color = pv_and_color[1]
+                pl.add_mesh(sel_pv, color=color)
+
+    # Graph the second subplot.
+    if object_2 or object_3:
+        pl.subplot(0,1)
+        pl.add_mesh(non_sel_1_pv, color=color_1)
+        if sel_regions_1:
+            for pv_and_color in sel_1_pvs_and_colors:
+                sel_pv = pv_and_color[0]
+                color = pv_and_color[1]
+                pl.add_mesh(sel_pv, color=color)
+
+    # Graph the third subplot.
+    if object_2:
+        pl.subplot(1,0)
+        pl.add_mesh(non_sel_2_pv, color=color_2)
+        if sel_regions_2:
+            for pv_and_color in sel_2_pvs_and_colors:
+                sel_pv = pv_and_color[0]
+                color = pv_and_color[1]
+                pl.add_mesh(sel_pv, color=color)
+
+    # Graph the fourth subplot.
+    if object_3:
+        pl.subplot(1,1)
+        pl.add_mesh(non_sel_3_pv, color=color_3)
+        if sel_regions_3:
+            for pv_and_color in sel_3_pvs_and_colors:
+                sel_pv = pv_and_color[0]
+                color = pv_and_color[1]
+                pl.add_mesh(sel_pv, color=color)
+
+    # Show the shapes.
+    if object_2 or object_3:
+        pl.link_views()
     pl.show()

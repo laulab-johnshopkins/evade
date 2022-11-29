@@ -1,4 +1,4 @@
-SCOOPS package
+scoops package
 ==============
 
 Submodules

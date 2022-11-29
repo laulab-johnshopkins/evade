@@ -51,7 +51,7 @@ def correlate_pockets(df_1, df_2):
 
 
 def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small, pocket_big, pocket_small, volumes,
-                   frames_for_volumes, heavy_atoms=True):
+                   frames_for_volumes, heavy_atoms=True, verbose=False):
     """
     Get order parameters that quantify the conformational change between two pockets.
 
@@ -89,6 +89,10 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
         When the algorithm checks a hydrogen atoms, and heavy_atoms is True,
         the software will switch to the heavy atom that the H is bound to.  The
         default value of heavy_atoms is True.
+    verbose : bool, optional
+        Whether to print the results of calculations performed during the analysis.
+        The default value is `False`.
+
     Returns
     -------
     Pandas DataFrame
@@ -153,16 +157,20 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     mean_dist = np.mean(dist_array)
     std_dist = np.std(dist_array)
     outlier_indices = []
-    print("Mean distance moved by pocket atoms between two selected frames:", mean_dist)
-    print("standard deviation of this distance:", std_dist)
-    print("Listing exceptionally mobile/still atoms:")
+    if verbose:
+        print("Mean distance moved by pocket atoms between two selected frames:", mean_dist)
+        print("standard deviation of this distance:", std_dist)
+        print("Listing exceptionally mobile/still atoms:")
     for index, dist in dict_index_to_dist.items():
         if (dist > (mean_dist + std_dist)) or (dist < (mean_dist - 0.5*std_dist)):
-            print("atom index:", index, "movement between frames:", dist,
-                  "residue:", u.atoms[index].resid)
+            if verbose:
+                print("atom index:", index, "movement between frames:", dist,
+                    "residue:", u.atoms[index].resid)
             outlier_indices.append(index)
             
     # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.
+    if verbose:
+        print("Finding atoms from above list that have voxels on the pocket surface.")
     pocket_small_edge = get_prot_pocket(protein_surface_small.surf, pocket_small)
     dict_index_to_pocket_voxels = {}
     for index in outlier_indices:
@@ -170,19 +178,26 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
         this_atom_pocket_contribution = voxel_and(pocket_small_edge, atom_sphere)
         if this_atom_pocket_contribution:
             this_atom_num_surface_voxels = this_atom_pocket_contribution.filled_count
-            print(index, dict_index_to_dist[index], u.atoms[index].resid, this_atom_num_surface_voxels)
             dict_index_to_pocket_voxels[index] = this_atom_num_surface_voxels
+            if verbose:
+                print("atom index:", index, "movement between frames:", dict_index_to_dist[index],
+                      "residue:", u.atoms[index].resid,
+                      "atom's voxels on pocket surface:", this_atom_num_surface_voxels)
     # Choose atoms with relatively high exposed surface area.
     voxel_count_array = np.array(list(dict_index_to_pocket_voxels.values()))
     mean_voxel_count = np.mean(voxel_count_array)
     std_voxel_count = np.std(voxel_count_array)
-    print(mean_voxel_count, std_voxel_count)
+    if verbose:
+        print("mean pocket-exposed voxels (from above atoms):", mean_voxel_count, "std", std_voxel_count)
     key_moving_indices = []
     key_stationary_indices = []
+    if verbose:
+        print("Finding atoms from above list with higher-than-average pocket surface exposure.")
     for index, voxel_count in dict_index_to_pocket_voxels.items():
         if voxel_count > mean_voxel_count:
-            print("high voxel count", index, dict_index_to_dist[index], u.atoms[index].resid,
-                  u.atoms[index].name, voxel_count)
+            if verbose:
+                print("high voxel count", index, dict_index_to_dist[index], u.atoms[index].resid,
+                      u.atoms[index].name, voxel_count)
             if dict_index_to_dist[index] > mean_dist:
                 key_moving_indices.append(index)
             else:

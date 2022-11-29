@@ -1,8 +1,8 @@
-SCOOPS
+scoops
 ======
 
 .. toctree::
    :maxdepth: 4
 
-   setup
    scoops
+   setup
