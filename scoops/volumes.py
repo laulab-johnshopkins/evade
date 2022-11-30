@@ -1,10 +1,8 @@
-import math
 import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.analysis import align, rms
+from MDAnalysis.analysis import rms
 import trimesh
 import pyvista as pv
-import pandas as pd
 import numpy_indexed as npi
 import scipy
 import scipy.stats
@@ -57,17 +55,20 @@ class ProteinSurface:
     atom_geo_list : list of AtomGeo objects
         Contains an AtomGeo for each atom in mda_atomgroup.
     solvent_rad : float
-        The distance that is added to the radius of each atom in the surface.  This is to replicate the
-        solvent-accessible surface area.  This value should not be changed after object initialization.
+        The distance that is added to the radius of each atom in the surface.  This is to replicate
+        the solvent-accessible surface area.  This value should not be changed after object
+        initialization.
     """
-    def __init__(self, mda_atomgroup, solvent_rad=1.09, grid_size=0.7, surf=None, atom_geo_list=None):
+
+    def __init__(self, mda_atomgroup, solvent_rad=1.09, grid_size=0.7, surf=None,
+                 atom_geo_list=None):
         self.mda_atomgroup = mda_atomgroup
         self.solvent_rad = solvent_rad
 
-        # Generate surface.  The process is iterative; each time it checks if the minimum point in the new
-        # voxel is less (in any dimension) than the previous minimum.  Therefore the first point must be
-        # initialized separately.  There's probably a way to implement this in fewer lines of code, but
-        # the implementation here works so I kept it.
+        # Generate surface.  The process is iterative; each time it checks if the minimum point in
+        # the new voxel is less (in any dimension) than the previous minimum.  Therefore the first
+        # point must be initialized separately.  There's probably a way to implement this in fewer
+        # lines of code, but the implementation here works so I kept it.
         dict_radius_to_voxel_sphere = {}
         atom = self.mda_atomgroup[0]
         try:
@@ -120,14 +121,16 @@ class ProteinSurface:
                 next_sphere = generate_voxelized_sphere(sphere_rad, [0,0,0], grid_size)
                 dict_radius_to_voxel_sphere[sphere_rad] = next_sphere
             next_voxel = dict_radius_to_voxel_sphere[sphere_rad].copy()
-            # The round() code shifts the point to the nearest multiple of grid_size.  This is necessary
-            # because otherwise the origin could be offset from the expected grid, breaking the boolean code.
+            # The round() code shifts the point to the nearest multiple of grid_size.  This is
+            # necessary because otherwise the origin could be offset from the expected grid,
+            # breaking the boolean code.
             exact_trans = atom.position
             approx_trans_x = round(exact_trans[0] / grid_size) * grid_size
             approx_trans_y = round(exact_trans[1] / grid_size) * grid_size
             approx_trans_z = round(exact_trans[2] / grid_size) * grid_size
 
-            next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y, approx_trans_z]))
+            next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y,
+                                                   approx_trans_z]))
             next_voxel = next_voxel.copy()
 
             end_index = start_index + next_voxel.filled_count
@@ -143,14 +146,16 @@ class ProteinSurface:
             self.atom_geo_list.append(new_atom_geo)
             self.dict_mda_index_to_atom_geo[atom.index] = new_atom_geo
         voxel_points = voxel_points[0:end_index]
-        all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size, origin=[min_x,min_y,min_z])
+        all_indices = trimesh.voxel.ops.points_to_indices(voxel_points, pitch=grid_size,
+                                                          origin=[min_x,min_y,min_z])
         self.surf = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
 
-        # The above code makes a surface with the correct shape.  But the surface is too large, and its origin
-        # is [0,0,0].  The next few lines fix this.
+        # The above code makes a surface with the correct shape.  But the surface is too large,
+        # and its origin is [0,0,0].  The next few lines fix this.
         self.surf.apply_scale(grid_size)
         self.surf = self.surf.copy() # Necessary due to weird behavior (bug?) in trimesh library.
-        self.surf.apply_translation([min(voxel_points[:,0]), min(voxel_points[:,1]), min(voxel_points[:,2])])
+        self.surf.apply_translation([min(voxel_points[:,0]), min(voxel_points[:,1]),
+                                     min(voxel_points[:,2])])
         self.surf = self.surf.copy()
         self.surf.fill()
         self.surf = self.surf.copy()
@@ -161,13 +166,14 @@ vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8, "SE" : 1.9, 
 
 
 def align_to_pocket(protein_surf, pocket_shape, universe,
-                    copy_filename, frame_to_align_to, psf_loc=None, step=None, start=None, stop=None):
+                    copy_filename, frame_to_align_to, psf_loc=None, step=None, start=None,
+                    stop=None):
     """Align an MD trajectory to the coordinates of a pocket.
 
-    Before finding the pocket volume of each frame of the trajectory, it is useful to align the trajectory.
-    Global alignment can be too imprecise for this; it's best to align the trajectory to the pocket.  The
-    trajectory can be aligned to where the pocket is in any frame; the user must choose which frame.  (The
-    first frame is a logical choice.)
+    Before finding the pocket volume of each frame of the trajectory, it is useful to align the
+    trajectory.  Global alignment can be too imprecise for this; it's best to align the trajectory
+    to the pocket.  The trajectory can be aligned to where the pocket is in any frame; the user
+    must choose which frame.  (The first frame is a logical choice.)
 
     Parameters
     ----------
@@ -179,26 +185,29 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     universe : MDAnalysis universe
         The universe object that the data are taken from.
     copy_filename : string
-        Because this function returns an MDAnalysis Universe object, it must create a trajectory file
-        for the Universe to read.  The filename is input here.  This can be either a PDB file or a DCD file.
-        If it is a DCD, then `psf_loc` must also be given.
+        Because this function returns an MDAnalysis Universe object, it must create a trajectory
+        file for the Universe to read.  The filename is input here.  This can be either a PDB file
+        or a DCD file.  If it is a DCD, then `psf_loc` must also be given.
     frame_to_align_to : integer
-        The frame of the trajectory that other frames should be aligned to.  protein_surf and pocket_shape should
-        come from this frame.
+        The frame of the trajectory that other frames should be aligned to.  protein_surf and
+        pocket_shape should come from this frame.
     psf_loc : string, optional
-        If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.  If
-        `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default value is `None`.)
+        If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.
+        If `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default
+        value is `None`.)
     step : integer or `None`, optional
         This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
-        aligning every frame; a value of 2 would lead to aligning every other frame.  (Skipped frames are
-        not included in the output universe.)  The default value of `None` behaves identically to a value of 1.
+        aligning every frame; a value of 2 would lead to aligning every other frame.  (Skipped
+        frames are not included in the output universe.)  The default value of `None` behaves
+        identically to a value of 1.
     start : integer or `None`, optional
-        This controls which frame to start with.  Frames before `start` are not included in the output universe.
-        The default value of `None` causes the code to start at the first frame.
+        This controls which frame to start with.  Frames before `start` are not included in the
+        output universe.  The default value of `None` causes the code to start at the first frame.
     stop : integer or `None`, optional
-        This controls which frame to end with.  Frames at or after `stop` are not included in the output universe.
-        E.g. if `stop=10` and `start=None`, then the trajectory will include the first 10 frames (indices 0-9).
-        The default value of `None` causes the code to go until the end of the trajectory.
+        This controls which frame to end with.  Frames at or after `stop` are not included in the
+        output universe.  E.g. if `stop=10` and `start=None`, then the trajectory will include the
+        first 10 frames (indices 0-9).  The default value of `None` causes the code to go until the
+        end of the trajectory.
 
     Returns
     -------
@@ -207,8 +216,6 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     """
 
     check_equal_pitches(protein_surf.surf, pocket_shape)
-    grid_size = protein_surf.surf.pitch[0]
-    solvent_rad = protein_surf.solvent_rad
     # Determine which atoms are in the pocket.
     pocket_atoms_list, pocket_atoms_surf = get_pocket_atoms(protein_surf, pocket_shape,
                                                             universe)
@@ -225,7 +232,8 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     universe.trajectory[frame_to_align_to]
     u_copy.trajectory[-1]
     print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
-    print(rms.rmsd(u_copy.select_atoms(sel_str).positions, universe.select_atoms(sel_str).positions, superposition=False))
+    print(rms.rmsd(u_copy.select_atoms(sel_str).positions,
+                   universe.select_atoms(sel_str).positions, superposition=False))
 
     # Align the trajectory.
     u_copy.trajectory[frame_to_align_to]
@@ -235,12 +243,13 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
         u_copy=mda.Universe(psf_loc, copy_filename)
     else:
         u_copy=mda.Universe(copy_filename)
-    
+
     # Print RMSDs after alignment.
     universe.trajectory[frame_to_align_to]
     u_copy.trajectory[-1]
     print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
-    print(rms.rmsd(u_copy.select_atoms(sel_str).positions, universe.select_atoms(sel_str).positions, superposition=False))
+    print(rms.rmsd(u_copy.select_atoms(sel_str).positions,
+          universe.select_atoms(sel_str).positions, superposition=False))
     u_copy.trajectory[frame_to_align_to]
 
     return u_copy
@@ -249,10 +258,10 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
 def get_largest_shape(voxel_grid):
     """
     Get the largest shape in a trimesh VoxelGrid.
-    
+
     Voxels kitty-corner from the largest shape are classified as being in a
     separate shape; they are discarded.
-    
+
     Parameters
     ----------
     voxel_grid : trimesh VoxelGrid object
@@ -263,11 +272,11 @@ def get_largest_shape(voxel_grid):
         A trimesh VoxelGrid object containing the largest shape in the input
         VoxelGrid.
     """
-    
+
     if not (voxel_grid.pitch[0] == voxel_grid.pitch[1] == voxel_grid.pitch[2]):
         raise ValueError("Pitches must be equal in all 3 dimensions")
     grid_size = voxel_grid.pitch[0]
-    
+
     """scipy.ndimage assigns an integer label to each collection of contiguous points.
     It classifies kitty-corner points as being in a separate object (unlike POVME).
     It returns two items:
@@ -284,8 +293,8 @@ def get_largest_shape(voxel_grid):
     # Goal: Get the label of the biggest shape.
     # numpy.argmax returns the index of the highest value in an array.  If this value is present
     # multiple times, the function returns the index of the first occurrence.  The first entry in
-    # feature_sizes is excluded because it counts empty voxels.  The +1 corrects for the first entry
-    # being missing.
+    # feature_sizes is excluded because it counts empty voxels.  The +1 corrects for the first
+    # entry being missing.
     index_of_most_populated_label = np.argmax(feature_sizes[1:])+1
 
     # Create a VoxelGrid where the points in the largest shape are filled.
@@ -307,7 +316,7 @@ def get_largest_shape(voxel_grid):
 def voxel_surf_from_numpy(data_loc, grid_size):
     """
     Get a trimesh VoxelGrid from a numpy .npy file.
-    
+
     Parameters
     ----------
     data_loc : string
@@ -335,7 +344,7 @@ def voxel_surf_from_numpy(data_loc, grid_size):
 def get_pocket_atoms(protein_surface_obj, pocket_surf, universe):
     """
     Get all protein atoms that border the pocket.
-    
+
     Parameters
     ----------
     protein_surface_obj : ProteinSurface
@@ -380,7 +389,7 @@ def write_voxels_to_pdb(voxel_grid, pdb_filename):
     Each voxel is written as an atom of name "X".  The result can
     be viewed in PyMOL; users may want to use `set sphere_scale [radius]`
     where `radius` is 1/2 the voxel grid size.
-    
+
     Parameters
     ----------
     voxel_grid : trimesh VoxelGrid object
@@ -397,7 +406,7 @@ def write_voxels_to_pdb(voxel_grid, pdb_filename):
 def get_prot_pocket(protein_surf, pocket_surf):
     """
     Gets all voxels of the protein that border the pocket.
-    
+
     Parameters
     ----------
     protein_surf : trimesh VoxelGrid object
@@ -417,10 +426,10 @@ def get_prot_pocket(protein_surf, pocket_surf):
 def dilate_voxel_grid(voxel_grid):
     """
     Creates a dilated version of the input shape.
-    
+
     The function creates a version of the input shape that has
     been expanded by 1 grid position in all dimensions.
-    
+
     Parameters
     ----------
     voxel_grid : trimesh VoxelGrid object
@@ -454,11 +463,11 @@ def dilate_voxel_grid(voxel_grid):
 def generate_voxelized_sphere(radius, center, grid_size):
     """
     Creates a voxelized sphere.
-    
+
     The function creates a trimesh VoxelGrid sphere
     based on the input parameters.  The sphere is filled;
     i.e. internal points are occupied.
-    
+
     Parameters
     ----------
     radius : float
@@ -479,7 +488,7 @@ def generate_voxelized_sphere(radius, center, grid_size):
     y_max = round((center[1]+radius) / grid_size) * grid_size
     z_min = round((center[2]-radius) / grid_size) * grid_size
     z_max = round((center[2]+radius) / grid_size) * grid_size
-    
+
     # Create a list of all points in the grid.
     # See https://stackoverflow.com/a/12891609
     # The complex numbers cause numpy to go from the min to max values
@@ -500,12 +509,14 @@ def generate_voxelized_sphere(radius, center, grid_size):
 
     # Convert list of points to trimesh VoxelGrid object.
     all_indices = trimesh.voxel.ops.points_to_indices(points_in_sphere, pitch=grid_size,
-                                                      origin=[min(points_in_sphere[:,0]), min(points_in_sphere[:,1]),
+                                                      origin=[min(points_in_sphere[:,0]),
+                                                              min(points_in_sphere[:,1]),
                                                               min(points_in_sphere[:,2])])
     sphere_voxel = trimesh.voxel.VoxelGrid(trimesh.voxel.ops.sparse_to_matrix(all_indices))
     sphere_voxel.apply_scale(grid_size)
     sphere_voxel = sphere_voxel.copy()
-    sphere_voxel.apply_translation([min(points_in_sphere[:,0]), min(points_in_sphere[:,1]), min(points_in_sphere[:,2])])
+    sphere_voxel.apply_translation([min(points_in_sphere[:,0]), min(points_in_sphere[:,1]),
+                                    min(points_in_sphere[:,2])])
     sphere_voxel = sphere_voxel.copy()
     return sphere_voxel
 
@@ -513,15 +524,15 @@ def generate_voxelized_sphere(radius, center, grid_size):
 def generate_voxelized_box(lengths, center, grid_size):
     """
     Creates a voxelized box.
-    
+
     The function creates a trimesh VoxelGrid box
     based on the input parameters.  The box is filled; i.e.
     internal points are occupied.
-    
+
     Parameters
     ----------
     lengths : list-like object containing three floats
-        The box's side lengths in x, y, z directions 
+        The box's side lengths in x, y, z directions.
     center : list-like object containing three floats
         x, y, z coordinates of the sphere's center.
     grid_size : float
@@ -542,7 +553,7 @@ def generate_voxelized_box(lengths, center, grid_size):
     y_max = round((center[1]+0.5*lengths[1]-0.5*grid_size) / grid_size) * grid_size
     z_min = round((center[2]-0.5*lengths[2]+0.5*grid_size) / grid_size) * grid_size
     z_max = round((center[2]+0.5*lengths[2]-0.5*grid_size) / grid_size) * grid_size
-    
+
     # Create a list of all points in the grid.
     # See https://stackoverflow.com/a/12891609
     # The complex numbers cause numpy to go from the min to max values
@@ -553,7 +564,7 @@ def generate_voxelized_box(lengths, center, grid_size):
                        z_min:z_max:complex(0, (z_max-z_min)/grid_size+1)]
     positions = np.vstack([X.ravel(), Y.ravel(), Z.ravel()])
     points_in_box = positions.T
-    
+
     all_indices = trimesh.voxel.ops.points_to_indices(points_in_box, pitch=grid_size,
                                                       origin=[min(points_in_box[:,0]),
                                                               min(points_in_box[:,1]),
@@ -571,11 +582,11 @@ def generate_voxelized_box(lengths, center, grid_size):
 def check_equal_pitches(voxel_grid_1, voxel_grid_2):
     """
     Verify that two voxel grids have the same pitch as each other.
-    
+
     Verifies that voxel_grid_1 and voxel_grid_2 have
     pitches equal to each other and the same in each
     direction.  Raises an error if this is not true.
-    
+
     Parameters
     ----------
     voxel_grid_1 : trimesh VoxelGrid object
@@ -600,12 +611,12 @@ def check_equal_pitches(voxel_grid_1, voxel_grid_2):
 def voxel_subtract(voxel_grid_1, voxel_grid_2):
     """
     voxel_grid_1 - voxel_grid_2.
-    
+
     Returns a VoxelGrid object containing all points in
     voxel_grid_1 that are not in voxel_grid_2.  The
     returned VoxelGrid's pitch is
     the same as the input arguments' pitch.
-    
+
     Parameters
     ----------
     voxel_grid_1 : trimesh VoxelGrid object
@@ -619,10 +630,10 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
     trimesh VoxelGrid object
         A VoxelGrid with the remaining points from
         voxel_grid_1
-    """ 
-    
+    """
+
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
-    
+
     # Check which points from voxel_grid_1 are in voxel_grid_2.
     vox_1_without_2_points = [] # initialization
     # FIXME decimal place is magic number
@@ -649,12 +660,12 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
 
 def voxel_or(voxel_grid_1, voxel_grid_2):
     """Finds all points in voxel_grid_1 and/or voxel_grid_2.
-    
+
     Returns a VoxelGrid with all points in at least one of voxel_grid_1 and
     voxel_grid_2.  Unlike the trimesh library's
     boolean_sparse function, this function does not require that the
     two input grids have the same shape.
-    
+
     Parameters
     ----------
     voxel_grid_1 : trimesh VoxelGrid object
@@ -668,7 +679,7 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     trimesh VoxelGrid object
         A VoxelGrid with all points from voxel_grid_1 and/or voxel_grid_2
     """
-    
+
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
     vox_1_or_2_points = np.append(voxel_grid_1.points, voxel_grid_2.points, axis=0)
     min_x = min(vox_1_or_2_points[:,0])
@@ -688,11 +699,11 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
 
 def voxel_and(voxel_grid_1, voxel_grid_2):
     """Finds all points in both voxel_grid_1 and voxel_grid_2.
-    
+
     Returns a VoxelGrid with all points in both voxel_grid_1
     and voxel_grid_2.  Returns None if the two objects have no
     points in common.
-    
+
     Parameters
     ----------
     voxel_grid_1 : trimesh VoxelGrid object
@@ -705,10 +716,10 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
     -------
     trimesh VoxelGrid object
         A VoxelGrid with all points from both voxel_grid_1 and voxel_grid_2
-    """ 
+    """
 
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
-    
+
     vox_1_and_2_points = npi.intersection(voxel_grid_1.points, voxel_grid_2.points)
 
     if len(vox_1_and_2_points) == 0:
@@ -731,14 +742,14 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
 def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regions_1=None,
                   color_2="blue", sel_regions_2=None):
     """Displays two voxelized proteins in a Jupyter notebook.
-    
+
     Uses PyVista to show two proteins.  They are shown together,
     and each protein is shown separately.
     The protein and pocket are shown as being hollow; i.e. if
     users zoom past the surface they'll see the inside of the shape.
     The rest of the software package uses filled shapes, but this
     function displays them as hollow to decrease lag.
-    
+
     Parameters
     ----------
     protein_surface_1 : ProteinSurface object
@@ -755,7 +766,7 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
     sel_regions_2 : dictionary mapping MDAnalysis AtomGroups to strings
         The colors for selected regions of the second protein.  Large selections slow
         the initial rendering.
-    """ 
+    """
 
     dict_sel_1_shape_to_color = {}
     non_sel_1_region = protein_surface_1.surf
@@ -770,7 +781,7 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
                     sel_region = sel_atom_geo.voxel_sphere
             non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
             dict_sel_1_shape_to_color[sel_region] = sel_color
-        
+
     dict_sel_2_shape_to_color = {}
     non_sel_2_region = protein_surface_2.surf
     if sel_regions_2:
@@ -784,17 +795,17 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
                     sel_region = sel_atom_geo.voxel_sphere
             non_sel_2_region = voxel_subtract(non_sel_2_region, sel_region)
             dict_sel_2_shape_to_color[sel_region] = sel_color
-    
+
     non_sel_1_vox = non_sel_1_region.copy()
     non_sel_1_vox.hollow()
     non_sel_1_trimesh = non_sel_1_vox.as_boxes()
     non_sel_1_pv = pv.wrap(non_sel_1_trimesh)
-    
+
     non_sel_2_vox = non_sel_2_region.copy()
     non_sel_2_vox.hollow()
     non_sel_2_trimesh = non_sel_2_vox.as_boxes()
     non_sel_2_pv = pv.wrap(non_sel_2_trimesh)
-    
+
     pl = pv.Plotter(shape=(2,2))
     pl.add_mesh(non_sel_1_pv, color=color_1)
     if sel_regions_1:
@@ -834,11 +845,11 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
     pl.show()
 
 
-def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color_2="blue", color_3="green",
-                    sel_regions_1=None, sel_regions_2=None, sel_regions_3=None):
-                                        
+def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color_2="blue",
+                    color_3="green", sel_regions_1=None, sel_regions_2=None, sel_regions_3=None):
+
     """Displays 1 to 3 objects (ProteinSurface and/or VoxelGrid) in a Jupyter notebook.
-    
+
     Uses PyVista to show up to three objects.  They are shown together,
     and each object is shown separately.
     The objects are shown as being hollow; i.e. if
@@ -878,8 +889,9 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
         more info.
     """
 
-    # If object_1 is a ProteinSurface, then the user can select regions of it to have different colors.
-    if type(object_1) == ProteinSurface:
+    # If object_1 is a ProteinSurface, then the user can select regions of it to have different
+    # colors.
+    if isinstance(object_1, ProteinSurface):
         dict_sel_1_shape_to_color = {}
         non_sel_1_region = object_1.surf
         if sel_regions_1:
@@ -894,13 +906,13 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
                 non_sel_1_region = voxel_subtract(non_sel_1_region, sel_region)
                 dict_sel_1_shape_to_color[sel_region] = sel_color
     # Users can't select regions of VoxelGrids.
-    elif type(object_1) == trimesh.voxel.base.VoxelGrid:
+    elif isinstance(object_1, trimesh.voxel.base.VoxelGrid):
         non_sel_1_region = object_1
         if sel_regions_1:
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_1 must be None.")
     # If object_1 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     else:
-         raise TypeError("object_1 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid.")
+        raise TypeError("object_1 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid.")
 
     # Convert object_1 to PyVista
     non_sel_1_vox = non_sel_1_region.copy()
@@ -919,7 +931,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
     # object_2 and object_3 are handled the same way as object_1, except that they may be None.
 
     # If object_2 is a ProteinSurface, then the user can select regions of it to have different colors.
-    if object_2 and type(object_2) == ProteinSurface:
+    if object_2 and isinstance(object_2, ProteinSurface):
         dict_sel_2_shape_to_color = {}
         non_sel_2_region = object_2.surf
         if sel_regions_2:
@@ -934,13 +946,13 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
                 non_sel_2_region = voxel_subtract(non_sel_2_region, sel_region)
                 dict_sel_2_shape_to_color[sel_region] = sel_color
     # Users can't select regions of VoxelGrids.
-    elif object_2 and type(object_2) == trimesh.voxel.base.VoxelGrid:
+    elif object_2 and isinstance(object_2, trimesh.voxel.base.VoxelGrid):
         non_sel_2_region = object_2
         if sel_regions_2:
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_2 must be None.")
     # If object_2 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     elif object_2:
-         raise TypeError("object_2 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+        raise TypeError("object_2 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
 
     # Convert object_2 to PyVista
     if object_2:
@@ -957,8 +969,9 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
                 sel_pv = pv.wrap(sel_trimesh)
                 sel_2_pvs_and_colors.append([sel_pv, color])
 
-    # If object_3 is a ProteinSurface, then the user can select regions of it to have different colors.
-    if object_3 and type(object_3) == ProteinSurface:
+    # If object_3 is a ProteinSurface, then the user can select regions of it to have
+    # different colors.
+    if object_3 and isinstance(object_3, ProteinSurface):
         dict_sel_3_shape_to_color = {}
         non_sel_3_region = object_3.surf
         if sel_regions_3:
@@ -973,13 +986,13 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
                 non_sel_3_region = voxel_subtract(non_sel_3_region, sel_region)
                 dict_sel_3_shape_to_color[sel_region] = sel_color
     # Users can't select regions of VoxelGrids.
-    elif object_3 and type(object_3) == trimesh.voxel.base.VoxelGrid:
+    elif object_3 and isinstance(object_3, trimesh.voxel.base.VoxelGrid):
         non_sel_3_region = object_3
         if sel_regions_3:
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_3 must be None.")
     # If object_3 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     elif object_3:
-         raise TypeError("object_3 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+        raise TypeError("object_3 must be scoops.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
 
     # Convert object_3 to PyVista
     if object_3:
@@ -1009,7 +1022,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
             sel_pv = pv_and_color[0]
             color = pv_and_color[1]
             pl.add_mesh(sel_pv, color=color)
-    
+
     if object_2:
         pl.add_mesh(non_sel_2_pv, color=color_2)
         if sel_regions_2:

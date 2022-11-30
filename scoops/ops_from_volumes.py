@@ -1,9 +1,14 @@
-from .volumes import *
+import math
+import scipy.stats
+import pandas as pd
+import numpy as np
+import MDAnalysis as mda
+from . import volumes
 
 def correlate_pockets(df_1, df_2):
     """
     Find correlated order parameters between 2 proteins.
-    
+
     Parameters
     ----------
     df_1 : Pandas DataFrame
@@ -16,7 +21,7 @@ def correlate_pockets(df_1, df_2):
         A DataFrame with information about each pair of order parameters examined by the
         software.
     """
-    
+
     output_df_as_list = []
     for index_1, row_1 in df_1.iterrows():
         for index_2, row_2 in df_2.iterrows():
@@ -50,13 +55,14 @@ def correlate_pockets(df_1, df_2):
     return df
 
 
-def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small, pocket_big, pocket_small, volumes,
-                   frames_for_volumes, heavy_atoms=True, verbose=False):
+def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small,
+                   pocket_big, pocket_small, vols_list, frames_for_volumes, heavy_atoms=True,
+                   verbose=False):
     """
     Get order parameters that quantify the conformational change between two pockets.
 
     Each order parameter is a distance between two atoms.
-    
+
     Parameters
     ----------
     traj_index_big : int
@@ -80,7 +86,7 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     pocket_small : trimesh VoxelGrid object
         The pocket interior of the selected frame where the pocket volume
         is smaller.
-    volumes : list of floats
+    vols_list : list of floats
         The volume of each frame in frames_for_volumes.
     frames_for_volumes : slice of MDAnalysis trajectory
         The frames that prots, pockets, and volumes contain.
@@ -115,23 +121,24 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
             p-value for the Pearson coefficient.
         ``"Rel. change in dist."``
             The change in atom-atom distance between the two frames of interest, processed
-            based on distance magnitude according to https://en.wikipedia.org/wiki/Relative_change_and_difference.
+            based on distance magnitude according to
+            https://en.wikipedia.org/wiki/Relative_change_and_difference.
         ``"Distances"``
             The atom-atom distance at each studied frame.
     """
 
-    check_equal_pitches(protein_surface_big.surf, pocket_big)
-    check_equal_pitches(protein_surface_big.surf, pocket_small)
-    check_equal_pitches(protein_surface_small.surf, pocket_small)
-    grid_size = protein_surface_small.surf.pitch[0]
-    if protein_surface_big.solvent_rad == protein_surface_small.solvent_rad:
-        solvent_rad = protein_surface_big.solvent_rad
-    else:
-        raise ValueError("protein_surface_big and protein_surface_small have different solvent_rad values")
+    volumes.check_equal_pitches(protein_surface_big.surf, pocket_big)
+    volumes.check_equal_pitches(protein_surface_big.surf, pocket_small)
+    volumes.check_equal_pitches(protein_surface_small.surf, pocket_small)
+    if protein_surface_big.solvent_rad != protein_surface_small.solvent_rad:
+        raise ValueError("protein_surface_big and protein_surface_small have different "
+                         "solvent_rad values")
 
-    pocket_atoms_frame_big, pocket_frame_big = get_pocket_atoms(protein_surface_big, pocket_big, u)
-    pocket_atoms_frame_small, pocket_frame_small = get_pocket_atoms(protein_surface_small, pocket_small, u)
-    
+    pocket_atoms_frame_big, pocket_frame_big = volumes.get_pocket_atoms(protein_surface_big,
+                                                                        pocket_big, u)
+    pocket_atoms_frame_small, pocket_frame_small = volumes.get_pocket_atoms(protein_surface_small,
+                                                                            pocket_small, u)
+
     pocket_big_mda_indices = []
     for atom in pocket_atoms_frame_big:
         pocket_big_mda_indices.append(atom.mda_atomgroup[0].index)
@@ -139,7 +146,7 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     pocket_small_mda_indices = []
     for atom in pocket_atoms_frame_small:
         pocket_small_mda_indices.append(atom.mda_atomgroup[0].index)
-    
+
     # Find out how much each atom moved between the two frames of interest.  This will
     # be used to choose atoms that are unusually mobile or stationary.
     indices_in_either_pocket = list(set(pocket_big_mda_indices + pocket_small_mda_indices))
@@ -151,7 +158,7 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
         frame_b_pos = u.atoms[atom_index].position
         dist = math.dist(frame_a_pos, frame_b_pos)
         dict_index_to_dist[atom_index] = dist
-        
+
     # Find all atoms that moved more/less than most others.
     dist_array = np.array(list(dict_index_to_dist.values()))
     mean_dist = np.mean(dist_array)
@@ -167,15 +174,16 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                 print("atom index:", index, "movement between frames:", dist,
                     "residue:", u.atoms[index].resid)
             outlier_indices.append(index)
-            
-    # Among atoms chosen above, find how much exposed surface area each atom has in the smaller pocket.
+
+    # Among atoms chosen above, find how much exposed surface area each atom has in the
+    # smaller pocket.
     if verbose:
         print("Finding atoms from above list that have voxels on the pocket surface.")
-    pocket_small_edge = get_prot_pocket(protein_surface_small.surf, pocket_small)
+    pocket_small_edge = volumes.get_prot_pocket(protein_surface_small.surf, pocket_small)
     dict_index_to_pocket_voxels = {}
     for index in outlier_indices:
         atom_sphere = protein_surface_small.dict_mda_index_to_atom_geo[index].voxel_sphere
-        this_atom_pocket_contribution = voxel_and(pocket_small_edge, atom_sphere)
+        this_atom_pocket_contribution = volumes.voxel_and(pocket_small_edge, atom_sphere)
         if this_atom_pocket_contribution:
             this_atom_num_surface_voxels = this_atom_pocket_contribution.filled_count
             dict_index_to_pocket_voxels[index] = this_atom_num_surface_voxels
@@ -188,7 +196,8 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
     mean_voxel_count = np.mean(voxel_count_array)
     std_voxel_count = np.std(voxel_count_array)
     if verbose:
-        print("mean pocket-exposed voxels (from above atoms):", mean_voxel_count, "std", std_voxel_count)
+        print("mean pocket-exposed voxels (from above atoms):", mean_voxel_count, "std",
+              std_voxel_count)
     key_moving_indices = []
     key_stationary_indices = []
     if verbose:
@@ -211,7 +220,7 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
             return h_index
         heavy_atom = h_atom.bonded_atoms[0]
         return heavy_atom.index
-    
+
     dict_index_pair_to_rel_op_dist = {}
     for moving_index in key_moving_indices:
         if heavy_atoms:
@@ -247,10 +256,10 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                 # See https://en.wikipedia.org/wiki/Relative_change_and_difference
                 rel_diff = abs(op_dist_frame_big - op_dist_frame_small) / ((op_dist_frame_big + op_dist_frame_small) / 2)
                 dict_index_pair_to_rel_op_dist[(moving_index, other_moving_index)] = rel_diff
-                
+
     # Choose distances whose relative difference between the two frames is high.  For each of these
-    # distances, calculate the distance for every frame in the trajectory.  Find the correlation between
-    # the distance and pocket volume.
+    # distances, calculate the distance for every frame in the trajectory.  Find the correlation
+    # between the distance and pocket volume.
     rel_op_dist_array = np.array(list(dict_index_pair_to_rel_op_dist.values()))
     mean_rel_op_dist = np.mean(rel_op_dist_array)
     std_rel_op_dist = np.std(rel_op_dist_array)
@@ -264,8 +273,8 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                 op_dist_this_frame = math.dist(u.atoms[index_a].position,
                                                u.atoms[index_b].position)
                 dist_list.append(op_dist_this_frame)
-            pearson_r, p_value = scipy.stats.pearsonr(dist_list, volumes)
-            
+            pearson_r, p_value = scipy.stats.pearsonr(dist_list, vols_list)
+
             row_of_df_as_list = [index_a, index_b, pearson_r, p_value,
                                  u.atoms[index_a].name, u.atoms[index_a].resid,
                                  u.atoms[index_b].name, u.atoms[index_b].resid,

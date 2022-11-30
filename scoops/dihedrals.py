@@ -1,11 +1,11 @@
+import math
 import numpy as np
-from scipy import stats
+import pandas as pd
+import scipy.stats
 import MDAnalysis as mda
 import  MDAnalysis.analysis.dihedrals
 import seaborn as sns
 import matplotlib.pyplot as plt
-from .volumes import *
-from .ops_from_volumes import *
 
 
 def get_atom_movements(u, iter_step=1, selection="protein"):
@@ -49,7 +49,8 @@ def get_atom_movements(u, iter_step=1, selection="protein"):
         moved_atom = sel_in_u_that_iterates[i]
         if mda.topology.guessers.guess_atom_element(moved_atom.type) == "H":
             continue
-        dict_index_to_dist_list[moved_atom.ix] = np.zeros(len(u.trajectory[0:len(u.trajectory):iter_step]))
+        empty_dist_list = np.zeros(len(u.trajectory[0:len(u.trajectory):iter_step]))
+        dict_index_to_dist_list[moved_atom.ix] = empty_dist_list
 
     # Get each atom's distance from initial position at each iterated frame.
     frame_num = 0
@@ -68,26 +69,28 @@ def get_atom_movements(u, iter_step=1, selection="protein"):
 
 def correlate_dists_to_observable(dict_index_to_dist_list, observable):
     """
-    Get the correlations between each residue's distance from first frame position and another observable.
+    Get the correlations between each residue's distance from first frame position and another
+    observable.
 
     This function should be run after `get_atom_movements`.
 
     Parameters
     ----------
     dict_index_to_dist_list : dictionary mapping integers to 1D arrays
-        This argument should be the output of `get_atom_movements`.  Each key is an MDAnalysis atom index;
-        each value is a list of the atom's distance from first frame position at every studied frame.  Note that
-        `get_atom_movements` can iterate over frames with step size >= 1.
+        This argument should be the output of `get_atom_movements`.  Each key is an MDAnalysis
+        atom index; each value is a list of the atom's distance from first frame position at every
+        studied frame.  Note that `get_atom_movements` can iterate over frames with step size >= 1.
     observable : list-like
-        This contains an observable's value at each trajectory frame that `dict_index_to_dist_list` has
-        distances for.
+        This contains an observable's value at each trajectory frame that `dict_index_to_dist_list`
+        has distances for.
 
     Returns
     -------
     sorted_indices : list of integers
         A list of keys of `dict_index_to_dist_list`, sorted lowest to highest.
     corrs : list of floats
-        The Pearson correlation coefficient between each atom's distance from first frame and `observable`.
+        The Pearson correlation coefficient between each atom's distance from first frame and
+        `observable`.
     pvals : list of floats
         The p-value for each atom's Pearson coefficient.
     """
@@ -141,7 +144,8 @@ def get_atoms_that_corr(corr_cutoff, sorted_indices, corrs, u):
         if abs(corrs[i]) > corr_cutoff:
             atom_index = sorted_indices[i]
             print(i, atom_index, corrs[i], u.atoms[atom_index])
-            # If the code finds multiple atoms from same residue, only take the atom with strongest correlation.
+            # If the code finds multiple atoms from same residue, only take the atom with
+            # strongest correlation.
             if u.atoms[atom_index].resnum == last_atom_resnum:
                 if abs(last_atom_corr) < abs(corrs[i]):
                     atom_indices_that_corr[-1] = atom_index
@@ -156,14 +160,15 @@ def get_atoms_that_corr(corr_cutoff, sorted_indices, corrs, u):
     return atom_indices_that_corr
 
 
-def explain_atom_corr_with_observable(atom, observable, observable_label, u, dict_index_to_dist_list,
+def explain_atom_corr_with_observable(atom, observable, observable_label, u,
+                                      dict_index_to_dist_list,
                                       dihedral_pearson_cutoff=0.3):
     """
     Determine if an atom's correlation with an observable can be explained by a dihedral angle.
 
-    This function should be run after `get_atoms_that_corr`.  It operates on a single atom, checking
-    if a dihedral on that atom's residue correlates with the observable.  The function considers both
-    positive and negative correlations to be meaningful.
+    This function should be run after `get_atoms_that_corr`.  It operates on a single atom,
+    checking if a dihedral on that atom's residue correlates with the observable.  The function
+    considers both positive and negative correlations to be meaningful.
 
     Parameters
     ----------
@@ -172,17 +177,20 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u, dic
     observable : list-like
         This contains an observable's value at each analyzed frame of an MD trajectory.
     observable_label : string
-        A short description of the observable, to be used when labeling graphs created by the function.
+        A short description of the observable, to be used when labeling graphs created by the
+        function.
     u : MDAnalysis universe
         The universe object that the data are taken from.  It is likely the same object used
         as an argument to `get_atom_movements`.
     dict_index_to_dist_list : dictionary mapping integers to 1D arrays
-        This argument should be the output of `get_atom_movements`.  Each key is an MDAnalysis atom index;
-        each value is a list of the atom's distance from first frame position at every studied frame.
+        This argument should be the output of `get_atom_movements`.  Each key is an MDAnalysis atom
+        index; each value is a list of the atom's distance from first frame position at every
+        studied frame.
     dihedral_pearson_cutoff : float, optional
-        The minimum correlation strength between a dihedral and `observable` that is considered meaningful.
-        The default value is 0.3.  The function uses the absolute value of correlations to include negative
-        correlations; thus `dihedral_pearson_cutoff` should always be positive.
+        The minimum correlation strength between a dihedral and `observable` that is considered
+        meaningful.  The default value is 0.3.  The function uses the absolute value of
+        correlations to include negative correlations; thus `dihedral_pearson_cutoff` should always
+        be positive.
 
     Returns
     -------
@@ -190,36 +198,38 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u, dic
         A dictionary listing various results about the dihedrals.  It contains:
 
         ``"distance_from_first_frame"``
-            1D array of floats containing the atom's distance from first-frame position at each studied frame.
+            1D array of floats containing the atom's distance from first-frame position at each
+            studied frame.
         ``"distance_from_first_frame_pearson"``
             A scipy PearsonRResult object correlating the phi dihedral with `observable`.
-            `dihedral_dict["distance_from_first_frame_pearson"][0]` is the Pearson coefficient, while
-            `dihedral_dict["distance_from_first_frame_pearson"][1]` is the p-value.
+            `dihedral_dict["distance_from_first_frame_pearson"][0]` is the Pearson coefficient,
+            while `dihedral_dict["distance_from_first_frame_pearson"][1]` is the p-value.
         ``"phi"``
-            Phi dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for this residue
-            (e.g. because of its position at end of chain).
+            Phi dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for
+            this residue (e.g. because of its position at end of chain).
         ``"phi_pearson"``
             A scipy PearsonRResult object correlating the phi dihedral with `observable`.
-            `dihedral_dict["phi_pearson"][0]` is the Pearson coefficient, while `dihedral_dict["phi_pearson"][1]`
-            is the p-value.
+            `dihedral_dict["phi_pearson"][0]` is the Pearson coefficient, while
+            `dihedral_dict["phi_pearson"][1]` is the p-value.
         ``"psi"``
-            Phi dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for this residue
-            (e.g. because of its position at end of chain).
+            Phi dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for
+            this residue (e.g. because of its position at end of chain).
         ``"psi_pearson"``
             A scipy PearsonRResult object correlating the psi dihedral with `observable`.
         ``"chi1"``
-            Chi1 dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for this residue
-            (e.g. because sidechain is too short).
+            Chi1 dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for
+            this residue (e.g. because sidechain is too short).
         ``"chi1_pearson"``
             A scipy PearsonRResult object correlating the chi1 dihedral with `observable`.
         ``"chi2"``
-            Chi2 dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for this residue
-            (e.g. because sidechain is too short).
+            Chi2 dihedral for `atom`'s residue at each studied frame.  Is `None` if not defined for
+            this residue (e.g. because sidechain is too short).
         ``"chi2_pearson"``
             A scipy PearsonRResult object correlating the chi2 dihedral with `observable`.
     """
 
-    dihedral_pearson_cutoff = abs(dihedral_pearson_cutoff) # in case the user inputs a negative value
+    # in case the user inputs a negative value
+    dihedral_pearson_cutoff = abs(dihedral_pearson_cutoff)
 
     atom_label = "Atom %s of residue %s %d of chain %s" %(atom.name,
                                                           atom.resname,
@@ -230,7 +240,8 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u, dic
     print("0-indexed atom index:", atom.ix)
     print(atom_label)
 
-    distance_from_first_frame_pearson = scipy.stats.pearsonr(dict_index_to_dist_list[atom.ix], observable)
+    distance_from_first_frame_pearson = scipy.stats.pearsonr(dict_index_to_dist_list[atom.ix],
+    observable)
     print(distance_from_first_frame_pearson)
     sns.kdeplot(x=dict_index_to_dist_list[atom.ix], y=observable,
                 fill=True, cmap="gnuplot2_r")
@@ -351,18 +362,18 @@ def get_best_dihedrals(dict_atom_index_to_dihedrals, min_pearson_to_include=0.0)
         Each key is a 0-indexed MDAnalysis atom index.  Each value is the output of
         `explain_atom_corr_with_observable`.
     min_pearson_to_include : float, optional
-        The minimum Pearson between the dihedral and observable needed for the angle to be included.
-        If a residue has no dihedrals whose Pearson exceeds this threshold, then the residue will not
-        be included in the output.  This function takes the absolute value of Pearsons to consider both
-        positive and negative correlations as valid; thus `min_pearson_to_include` should be positive.  The default
-        value is 0, meaning that the best dihedral for a residue will be returned even when that dihedral has
-        negligible correlation.
+        The minimum Pearson between the dihedral and observable needed for the angle to be
+        included.  If a residue has no dihedrals whose Pearson exceeds this threshold, then the
+        residue will not be included in the output.  This function takes the absolute value of
+        Pearsons to consider both positive and negative correlations as valid; thus
+        `min_pearson_to_include` should be positive.  The default value is 0, meaning that the best
+        dihedral for a residue will be returned even when that dihedral has negligible correlation.
 
     Returns
     -------
     df_best_angles : Pandas DataFrame
-        Columns are of the form `index_angle`, e.g. `64_chi1` for the chi1 dihedral of 0-indexed atom 64.
-        Rows are the dihedral value at each studied time point.
+        Columns are of the form `index_angle`, e.g. `64_chi1` for the chi1 dihedral of 0-indexed
+        atom 64.  Rows are the dihedral value at each studied time point.
     """
 
     min_pearson_to_include = abs(min_pearson_to_include) # in case user gives a negative value.
@@ -399,17 +410,17 @@ def add_correlated_dihedrals(nglview_widget, u, corr_mat, corr_cutoff):
     corr_mat : Pandas DataFrame
         The correlation matrix produced by dataframe.corr().
     corr_cutoff : float
-        The minimum correlation strength needed for the correlation to be displayed.  The function takes the
-        absolute value of the correlations to consider both positive and negative correlations as significant;
-        thus `corr_cutoff` should be positive.
+        The minimum correlation strength needed for the correlation to be displayed.  The function
+        takes the absolute value of the correlations to consider both positive and negative
+        correlations as significant; thus `corr_cutoff` should be positive.
 
     Notes
     -----
     The function modifies the input object `nglview_widget`, as described below:
 
-    A sphere is drawn at each key atom's position.  A line is drawn between each shown correlation.  The line
-    thickness is determined by correlation strength.  Hovering the mouse over a line causes it to display info
-    about the correlation.
+    A sphere is drawn at each key atom's position.  A line is drawn between each shown correlation.
+    The line thickness is determined by correlation strength.  Hovering the mouse over a line
+    causes it to display info about the correlation.
     """
 
     corr_cutoff = abs(corr_cutoff)
