@@ -1,6 +1,6 @@
 import numpy as np
 import MDAnalysis as mda
-from MDAnalysis.analysis import rms
+from MDAnalysis.analysis import align, rms
 import trimesh
 import pyvista as pv
 import numpy_indexed as npi

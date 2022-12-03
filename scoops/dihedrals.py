@@ -8,7 +8,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def get_atom_movements(u, iter_step=1, selection="protein"):
+def get_atom_movements(u, step=None, start=None,
+                       stop=None, iter_step=1, selection="protein"):
     """
     Quantify atoms' motions from their positions at the first frame of the MD trajectory.
 
@@ -20,9 +21,17 @@ def get_atom_movements(u, iter_step=1, selection="protein"):
     u : MDAnalysis universe
         The universe object that the data are taken from.  WARNING: this should be aligned based on
         the residues in `selection`.
-    iter_step : integer, optional
-        The step size for iterating over the trajectory.  E.g. with a step size of 10, the analysis
-        is performed on every 10th frame.  Th default value is 1, which iterates over every frame.
+    step : integer or `None`, optional
+        This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
+        studying every frame; a value of 2 would lead to studying every other frame.  The default
+        value of `None` behaves identically to a value of 1.
+    start : integer or `None`, optional
+        This controls which frame to start with.  The default value of `None` causes the code to
+        start at the first frame.
+    stop : integer or `None`, optional
+        This controls which frame to end with.  Frames at or after `stop` are ignored.  E.g. if
+        `stop=10` and `start=None`, then the code will analyze the first 10 frames (indices 0-9).
+        The default value of `None` causes the code to go until the end of the trajectory.
     selection : string, optional
         An MDAnalysis selection string describing the residues to be studied.  The default value of
         "protein" selects all protein residues.  Any hydrogens in `selection` will be ignored.
@@ -54,7 +63,14 @@ def get_atom_movements(u, iter_step=1, selection="protein"):
 
     # Get each atom's distance from initial position at each iterated frame.
     frame_num = 0
-    for frame in u_that_iterates.trajectory[0:len(u.trajectory):iter_step]:
+    #for frame in u_that_iterates.trajectory[0:len(u.trajectory):iter_step]:
+    if not start:
+        start = 0
+    if not stop:
+        stop = len(u.trajectory)
+    if not step:
+        step = 1
+    for frame in u_that_iterates.trajectory[start:stop:step]:
         for i in range(len(sel_in_u)):
             moved_atom = sel_in_u_that_iterates[i]
             if mda.topology.guessers.guess_atom_element(moved_atom.type) == "H":
@@ -143,26 +159,23 @@ def get_atoms_that_corr(corr_cutoff, sorted_indices, corrs, u):
     for i in range(len(sorted_indices)):
         if abs(corrs[i]) > corr_cutoff:
             atom_index = sorted_indices[i]
-            print(i, atom_index, corrs[i], u.atoms[atom_index])
             # If the code finds multiple atoms from same residue, only take the atom with
             # strongest correlation.
             if u.atoms[atom_index].resnum == last_atom_resnum:
                 if abs(last_atom_corr) < abs(corrs[i]):
                     atom_indices_that_corr[-1] = atom_index
                     last_atom_corr = corrs[i]
-                    print(last_atom_corr)
             else:
                 atom_indices_that_corr.append(atom_index)
                 last_atom_corr = corrs[i]
                 last_atom_resnum = u.atoms[atom_index].resnum
-                print(last_atom_resnum)
-    print(atom_indices_that_corr)
     return atom_indices_that_corr
 
 
 def explain_atom_corr_with_observable(atom, observable, observable_label, u,
                                       dict_index_to_dist_list,
-                                      dihedral_pearson_cutoff=0.3):
+                                      dihedral_pearson_cutoff=0.3, step=None, start=None,
+                                      stop=None):
     """
     Determine if an atom's correlation with an observable can be explained by a dihedral angle.
 
@@ -191,6 +204,17 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
         meaningful.  The default value is 0.3.  The function uses the absolute value of
         correlations to include negative correlations; thus `dihedral_pearson_cutoff` should always
         be positive.
+    step : integer or `None`, optional
+        This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
+        studying every frame; a value of 2 would lead to studying every other frame.  The default
+        value of `None` behaves identically to a value of 1.
+    start : integer or `None`, optional
+        This controls which frame to start with.  The default value of `None` causes the code to
+        start at the first frame.
+    stop : integer or `None`, optional
+        This controls which frame to end with.  Frames at or after `stop` are ignored.  E.g. if
+        `stop=10` and `start=None`, then the code will analyze the first 10 frames (indices 0-9).
+        The default value of `None` causes the code to go until the end of the trajectory.
 
     Returns
     -------
@@ -257,7 +281,7 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
 
     phi_sel = [res.phi_selection() for res in residuegroup]
     if phi_sel[0]:
-        phi_angles_obj = MDAnalysis.analysis.dihedrals.Dihedral(phi_sel).run(step=10)
+        phi_angles_obj = MDAnalysis.analysis.dihedrals.Dihedral(phi_sel).run(step=step, start=start, stop=stop)
         phi_angles = phi_angles_obj.results.angles.flatten()
         phi_pearson = scipy.stats.pearsonr(phi_angles, observable)
         if abs(phi_pearson[0]) > dihedral_pearson_cutoff:
@@ -276,7 +300,7 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
 
     psi_sel = [res.psi_selection() for res in residuegroup]
     if psi_sel[0]:
-        psi_angles_obj = MDAnalysis.analysis.dihedrals.Dihedral(psi_sel).run(step=10)
+        psi_angles_obj = MDAnalysis.analysis.dihedrals.Dihedral(psi_sel).run(step=step, start=start, stop=stop)
         psi_angles = psi_angles_obj.results.angles.flatten()
         psi_pearson = scipy.stats.pearsonr(psi_angles, observable)
         if abs(psi_pearson[0]) > dihedral_pearson_cutoff:
@@ -300,7 +324,7 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
 
     elif atom.resname in ["CYS", "SER", "THR", "VAL", "PRO"]:
         chi1_sel = [res.chi1_selection() for res in residuegroup]
-        chi1_angles_object = MDAnalysis.analysis.dihedrals.Dihedral(chi1_sel).run(step=10)
+        chi1_angles_object = MDAnalysis.analysis.dihedrals.Dihedral(chi1_sel).run(step=step, start=start, stop=stop)
         chi1_angles = chi1_angles_object.results.angles.flatten()
 
         chi1_pearson = scipy.stats.pearsonr(chi1_angles, observable)
@@ -316,9 +340,9 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
         chi2_pearson = None
 
     else:
-        janin_results = MDAnalysis.analysis.dihedrals.Janin(u.residues[resindex].atoms).run()
+        janin_results = MDAnalysis.analysis.dihedrals.Janin(u.residues[resindex].atoms).run(step=step, start=start, stop=stop)
 
-        chi1_angles = janin_results.results.angles[:,:,0][::10].flatten()
+        chi1_angles = janin_results.results.angles[:,:,0][::].flatten()
         chi1_pearson = scipy.stats.pearsonr(chi1_angles, observable)
         if abs(chi1_pearson[0]) > dihedral_pearson_cutoff:
             print(chi1_pearson)
@@ -329,7 +353,7 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
             plt.ylabel(observable_label)
             plt.show()
 
-        chi2_angles = janin_results.results.angles[:,:,1][::10].flatten()
+        chi2_angles = janin_results.results.angles[:,:,1][::].flatten()
         chi2_pearson = scipy.stats.pearsonr(chi2_angles, observable)
         if abs(chi2_pearson[0]) > dihedral_pearson_cutoff:
             print(chi2_pearson)
@@ -445,5 +469,6 @@ def add_correlated_dihedrals(nglview_widget, u, corr_mat, corr_cutoff):
                                                                    u.atoms[atom_j_index].chainID,
                                                                    u.atoms[atom_j_index].resid, angle_labels[j],
                                                                    corr_mat.iloc[i,j]))
-                nglview_widget.shape.add_cylinder(u.atoms[atom_i_index].position, u.atoms[atom_j_index].position, [0,1,1],
+                nglview_widget.shape.add_cylinder(u.atoms[atom_i_index].position,
+                                                  u.atoms[atom_j_index].position, [0,1,1],
                                                   abs(corr_mat.iloc[i,j]), cylinder_name)
