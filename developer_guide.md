@@ -45,6 +45,10 @@ To recreate this directory, do the following:
       * Under the `toctree` command, you can add filenames.  E.g. add `page1` if there is a `page1.rst` file.  Note that the rst file must have a title for autodoc to include it.q
   * The relative imports in my modules (the `.` in `from .module1 import *`) are needed to get Sphinx to not complain.
 
+## Preparing For Installation
+* `poetry export --without-hashes -f requirements.txt --output requirements.txt`
+  * I would like to include hashes in requirements.txt.  This would increase security during software installation.  However, as described [here](https://github.com/python-poetry/poetry/issues/7122), poetry doesn't create hashes for some libraries.  This was observed to be an issue for a few SCOOPS dependencies.
+
 ## Adding Functions To The Code
 Code is listed in `__init__.py`.  This tells Python where to look for the code.  If `__init__.py` were blank, then users would need to explicitly import each submodule (`from a_module import a_submodule`).  Including code in `__init__.py` allows users to import all code by importing the base module.
 
