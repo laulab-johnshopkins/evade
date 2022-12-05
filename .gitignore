@@ -5,3 +5,4 @@ build
 scoops/__pycache__
 aligned.pdb
 .DS_STORE
+.venv
