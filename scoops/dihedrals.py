@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 def get_atom_movements(u, step=None, start=None,
-                       stop=None, iter_step=1, selection="protein"):
+                       stop=None, selection="protein"):
     """
     Quantify atoms' motions from their positions at the first frame of the MD trajectory.
 
@@ -38,7 +38,7 @@ def get_atom_movements(u, step=None, start=None,
 
     Returns
     -------
-    dictionary mapping integers to 1D arrays
+    dict_index_to_dist_list : dictionary mapping integers to 1D arrays
         Each key is the MDAnalysis atom index of a heavy atom.  (Every heavy atom described by
         `selection` will have a key.)  Each value is an array listing the atom's distance from
         its first-frame position at each studied frame.
@@ -49,6 +49,13 @@ def get_atom_movements(u, step=None, start=None,
     u_that_iterates.trajectory[0]
     sel_in_u = u.select_atoms(selection)
     sel_in_u_that_iterates = u_that_iterates.select_atoms(selection)
+    
+    if not start:
+        start = 0
+    if not stop:
+        stop = len(u.trajectory)
+    if not step:
+        step = 1
 
     # Initialize a dictionary mapping MDAnalysis atom indices to arrays listing the atoms'
     # distances from their positions at the first frame.  The arrays are initialized
@@ -58,18 +65,11 @@ def get_atom_movements(u, step=None, start=None,
         moved_atom = sel_in_u_that_iterates[i]
         if mda.topology.guessers.guess_atom_element(moved_atom.type) == "H":
             continue
-        empty_dist_list = np.zeros(len(u.trajectory[0:len(u.trajectory):iter_step]))
+        empty_dist_list = np.zeros(len(u.trajectory[start:stop:step]))
         dict_index_to_dist_list[moved_atom.ix] = empty_dist_list
 
     # Get each atom's distance from initial position at each iterated frame.
     frame_num = 0
-    #for frame in u_that_iterates.trajectory[0:len(u.trajectory):iter_step]:
-    if not start:
-        start = 0
-    if not stop:
-        stop = len(u.trajectory)
-    if not step:
-        step = 1
     for frame in u_that_iterates.trajectory[start:stop:step]:
         for i in range(len(sel_in_u)):
             moved_atom = sel_in_u_that_iterates[i]
