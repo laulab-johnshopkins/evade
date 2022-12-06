@@ -231,9 +231,6 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     # Print RMSDs before alignment
     universe.trajectory[frame_to_align_to]
     u_copy.trajectory[-1]
-    print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
-    print(rms.rmsd(u_copy.select_atoms(sel_str).positions,
-                   universe.select_atoms(sel_str).positions, superposition=False))
 
     # Align the trajectory.
     u_copy.trajectory[frame_to_align_to]
@@ -247,9 +244,6 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     # Print RMSDs after alignment.
     universe.trajectory[frame_to_align_to]
     u_copy.trajectory[-1]
-    print(rms.rmsd(u_copy.atoms.positions, universe.atoms.positions, superposition=False))
-    print(rms.rmsd(u_copy.select_atoms(sel_str).positions,
-          universe.select_atoms(sel_str).positions, superposition=False))
     u_copy.trajectory[frame_to_align_to]
 
     return u_copy
