@@ -175,7 +175,7 @@ def get_atoms_that_corr(corr_cutoff, sorted_indices, corrs, u):
 def explain_atom_corr_with_observable(atom, observable, observable_label, u,
                                       dict_index_to_dist_list,
                                       dihedral_pearson_cutoff=0.3, step=None, start=None,
-                                      stop=None):
+                                      stop=None, rcparams={}):
     """
     Determine if an atom's correlation with an observable can be explained by a dihedral angle.
 
@@ -215,6 +215,9 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
         This controls which frame to end with.  Frames at or after `stop` are ignored.  E.g. if
         `stop=10` and `start=None`, then the code will analyze the first 10 frames (indices 0-9).
         The default value of `None` causes the code to go until the end of the trajectory.
+    rcparams : dictionary
+        Parameters passed to matplotlib.pyplot's rcparams.  E.g. rcparams={"figure.figsize":(3,3)}
+        would set figures to be 3x3.
 
     Returns
     -------
@@ -251,6 +254,9 @@ def explain_atom_corr_with_observable(atom, observable, observable_label, u,
         ``"chi2_pearson"``
             A scipy PearsonRResult object correlating the chi2 dihedral with `observable`.
     """
+
+    for param, value in rcparams.items():
+        plt.rcParams[param] = value
 
     # in case the user inputs a negative value
     dihedral_pearson_cutoff = abs(dihedral_pearson_cutoff)
