@@ -15,3 +15,9 @@ SCOOPS analyzes binding site dynamics and allostery. It can find the volume of a
 
 ## Usage
 To see how to use SCOOPS, please read the Jupyter notebook in the `example` directory.
+
+## Troubleshooting
+* Issue: displayed proteins can't rotate/zoom.
+  * Possible solution: uninstall/reinstall ipykernel
+* Issue: displaying proteins takes too long.
+  * Possible solutions: simplify the sel_regions, and/or increase grid_size so the surface uses fewer voxels.
