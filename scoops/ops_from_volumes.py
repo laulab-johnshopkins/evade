@@ -36,8 +36,10 @@ def correlate_pockets(df_1, df_2):
                                                    "Pocket 1 p-value for Pearson",
                                                    "Pocket 1 Atom 1 name",
                                                    "Pocket 1 Atom 1 residue",
+                                                   "Pocket 1 Atom 1 chain or segid",
                                                    "Pocket 1 Atom 2 name",
                                                    "Pocket 1 Atom 2 residue",
+                                                   "Pocket 1 Atom 2 chain or segid",
                                                    "Pocket 1 Rel. change in dist.",
                                                    "Pocket 1 Distances",
                                                    "Pocket 2 Atom 1 index",
@@ -46,8 +48,10 @@ def correlate_pockets(df_1, df_2):
                                                    "Pocket 2 p-value for Pearson",
                                                    "Pocket 2 Atom 1 name",
                                                    "Pocket 2 Atom 1 residue",
+                                                   "Pocket 2 Atom 1 chain or segid",
                                                    "Pocket 2 Atom 2 name",
                                                    "Pocket 2 Atom 2 residue",
+                                                   "Pocket 2 Atom 2 chain or segid",
                                                    "Pocket 2 Rel. change in dist.",
                                                    "Pocket 2 Distances",
                                                    "Pearson between dists",
@@ -57,7 +61,7 @@ def correlate_pockets(df_1, df_2):
 
 def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, protein_surface_small,
                    pocket_big, pocket_small, vols_list, frames_for_volumes, heavy_atoms=True,
-                   verbose=False):
+                   chain_or_segid="segid", verbose=False):
     """
     Get order parameters that quantify the conformational change between two pockets.
 
@@ -95,6 +99,9 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
         When the algorithm checks a hydrogen atoms, and heavy_atoms is True,
         the software will switch to the heavy atom that the H is bound to.  The
         default value of heavy_atoms is True.
+    chain_or_segid : string or None, optional
+        Whether to list the chain, segid, or neither.  Acceptable values are `"chain"`, `"segid"`,
+        or `None`.  The default value is `"segid"`.
     verbose : bool, optional
         Whether to print the results of calculations performed during the analysis.
         The default value is `False`.
@@ -275,9 +282,19 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                 dist_list.append(op_dist_this_frame)
             pearson_r, p_value = scipy.stats.pearsonr(dist_list, vols_list)
 
+            if chain_or_segid == "chain":
+                a_chain_or_segid = u.atoms[index_a].chainID
+                b_chain_or_segid = u.atoms[index_b].chainID
+            elif chain_or_segid == "segid":
+                a_chain_or_segid = u.atoms[index_a].segid
+                b_chain_or_segid = u.atoms[index_b].segid
+            else:
+                a_chain_or_segid = None
+                b_chain_or_segid = None
+
             row_of_df_as_list = [index_a, index_b, pearson_r, p_value,
-                                 u.atoms[index_a].name, u.atoms[index_a].resid,
-                                 u.atoms[index_b].name, u.atoms[index_b].resid,
+                                 u.atoms[index_a].name, u.atoms[index_a].resid, a_chain_or_segid,
+                                 u.atoms[index_b].name, u.atoms[index_b].resid, b_chain_or_segid,
                                  rel_op_dist, dist_list]
             output_df_as_list.append(row_of_df_as_list)
 
@@ -285,7 +302,9 @@ def compare_frames(traj_index_big, traj_index_small, u, protein_surface_big, pro
                                                    "Pearson of dists",
                                                    "p-value for Pearson",
                                                    "Atom 1 name", "Atom 1 residue",
+                                                   "Atom 1 chain or segid",
                                                    "Atom 2 name", "Atom 2 residue",
+                                                   "Atom 2 chain or segid",
                                                    "Rel. change in dist.", "Distances"])
 
     return df
