@@ -476,12 +476,27 @@ def generate_voxelized_sphere(radius, center, grid_size):
     trimesh VoxelGrid object
         A VoxelGrid containing the sphere.
     """
+
+    # These lines get the minimum and maximum positions in each
+    # dimension, shifted to the nearest grid point.  (Shifting
+    # to the nearest grid point is necessary so that all objects
+    # with the same grid_size are aligned with each other.)
+    # The statements like x_min = round(x_min, 5) are needed because
+    # of float-precision issues.  E.g. 31*0.6=18.599999999999998
+    # instead of 18.6 on my computer; this destroys the grid spacing.
+    
     x_min = round((center[0]-radius) / grid_size) * grid_size
+    x_min = round(x_min, 5)
     x_max = round((center[0]+radius) / grid_size) * grid_size
+    x_max = round(x_max, 5)
     y_min = round((center[1]-radius) / grid_size) * grid_size
+    y_min = round(y_min, 5)
     y_max = round((center[1]+radius) / grid_size) * grid_size
+    y_max = round(y_max, 5)
     z_min = round((center[2]-radius) / grid_size) * grid_size
+    z_min = round(z_min, 5)
     z_max = round((center[2]+radius) / grid_size) * grid_size
+    z_max = round(z_max, 5)
 
     # Create a list of all points in the grid.
     # See https://stackoverflow.com/a/12891609
@@ -541,12 +556,19 @@ def generate_voxelized_box(lengths, center, grid_size):
     # The code works with the center points of each voxel, but the function's output box
     # extends to the voxel's edges.  The 0.5*grid_size accounts for this; the goal is to find
     # the voxel whose edge is closest to that specified by the input parameters.
+    # See the generate_voxelized_sphere comment for why I need the second round line.
     x_min = round((center[0]-0.5*lengths[0]+0.5*grid_size) / grid_size) * grid_size
+    x_min = round(x_min, 5)
     x_max = round((center[0]+0.5*lengths[0]-0.5*grid_size) / grid_size) * grid_size
+    x_max = round(x_max, 5)
     y_min = round((center[1]-0.5*lengths[1]+0.5*grid_size) / grid_size) * grid_size
+    y_min = round(y_min, 5)
     y_max = round((center[1]+0.5*lengths[1]-0.5*grid_size) / grid_size) * grid_size
+    y_max = round(y_max, 5)
     z_min = round((center[2]-0.5*lengths[2]+0.5*grid_size) / grid_size) * grid_size
+    z_min = round(z_min, 5)
     z_max = round((center[2]+0.5*lengths[2]-0.5*grid_size) / grid_size) * grid_size
+    z_max = round(z_max, 5)
 
     # Create a list of all points in the grid.
     # See https://stackoverflow.com/a/12891609
