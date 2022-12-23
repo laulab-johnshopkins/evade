@@ -123,11 +123,15 @@ class ProteinSurface:
             next_voxel = dict_radius_to_voxel_sphere[sphere_rad].copy()
             # The round() code shifts the point to the nearest multiple of grid_size.  This is
             # necessary because otherwise the origin could be offset from the expected grid,
-            # breaking the boolean code.
+            # breaking the boolean code.  The second round() statement in each dimension
+            # fixes numerical precision issues from multiplying by grid_size.
             exact_trans = atom.position
             approx_trans_x = round(exact_trans[0] / grid_size) * grid_size
+            approx_trans_x = round(approx_trans_x, 5)
             approx_trans_y = round(exact_trans[1] / grid_size) * grid_size
+            approx_trans_y = round(approx_trans_y, 5)
             approx_trans_z = round(exact_trans[2] / grid_size) * grid_size
+            approx_trans_z = round(approx_trans_z, 5)
 
             next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y,
                                                    approx_trans_z]))
