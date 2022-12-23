@@ -119,7 +119,7 @@ class ProteinSurface:
             sphere_rad = vdw_rad + solvent_rad
             if sphere_rad not in dict_radius_to_voxel_sphere:
                 next_sphere = generate_voxelized_sphere(sphere_rad, [0,0,0], grid_size)
-                dict_radius_to_voxel_sphere[sphere_rad] = next_sphere
+                dict_radius_to_voxel_sphere[sphere_rad] = next_sphere 
             next_voxel = dict_radius_to_voxel_sphere[sphere_rad].copy()
             # The round() code shifts the point to the nearest multiple of grid_size.  This is
             # necessary because otherwise the origin could be offset from the expected grid,
@@ -132,6 +132,9 @@ class ProteinSurface:
             approx_trans_y = round(approx_trans_y, 5)
             approx_trans_z = round(exact_trans[2] / grid_size) * grid_size
             approx_trans_z = round(approx_trans_z, 5)
+
+            #print("next_voxel before trans", next_voxel.points)
+            #print("approx_trans:", approx_trans_x, approx_trans_y, approx_trans_z)
 
             next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y,
                                                    approx_trans_z]))
@@ -506,10 +509,12 @@ def generate_voxelized_sphere(radius, center, grid_size):
     # See https://stackoverflow.com/a/12891609
     # The complex numbers cause numpy to go from the min to max values
     # (inclusive of both) with the number of points equal to the complex
-    # number.
-    X, Y, Z = np.mgrid[x_min:x_max:complex(0, (x_max-x_min)/grid_size+1),
-                       y_min:y_max:complex(0, (y_max-y_min)/grid_size+1),
-                       z_min:z_max:complex(0, (z_max-z_min)/grid_size+1)]
+    # number.  The round takes care of floating-point imprecision that
+    # sometimes causes Python to use the wrong number of grid points.
+    X, Y, Z = np.mgrid[x_min:x_max:complex(0, round((x_max-x_min)/grid_size+1, 5)),
+                       y_min:y_max:complex(0, round((y_max-y_min)/grid_size+1, 5)),
+                       z_min:z_max:complex(0, round((z_max-z_min)/grid_size+1, 5))]
+
     positions = np.vstack([X.ravel(), Y.ravel(), Z.ravel()])
     all_grid_points = positions.T
 
@@ -578,10 +583,11 @@ def generate_voxelized_box(lengths, center, grid_size):
     # See https://stackoverflow.com/a/12891609
     # The complex numbers cause numpy to go from the min to max values
     # (inclusive of both) with the number of points equal to the complex
-    # number.
-    X, Y, Z = np.mgrid[x_min:x_max:complex(0, (x_max-x_min)/grid_size+1),
-                       y_min:y_max:complex(0, (y_max-y_min)/grid_size+1),
-                       z_min:z_max:complex(0, (z_max-z_min)/grid_size+1)]
+    # number.  The round takes care of floating-point imprecision that
+    # sometimes causes Python to use the wrong number of grid points.
+    X, Y, Z = np.mgrid[x_min:x_max:complex(0, round((x_max-x_min)/grid_size+1, 5)),
+                       y_min:y_max:complex(0, round((y_max-y_min)/grid_size+1, 5)),
+                       z_min:z_max:complex(0, round((z_max-z_min)/grid_size+1, 5))]
     positions = np.vstack([X.ravel(), Y.ravel(), Z.ravel()])
     points_in_box = positions.T
 
