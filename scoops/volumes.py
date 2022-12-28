@@ -783,7 +783,10 @@ def compare_prots(protein_surface_1, protein_surface_2, color_1="red", sel_regio
     protein_surface_2 : ProteinSurface object
         The other protein to be displayed.
     color_1 : string, optional
-        The color of the first protein.  The default value is "red".
+        The color of the first protein.  The default value is "red".  This can
+        be any color supported by PvVista; the options are listed in an
+        expandable table at
+        https://docs.pyvista.org/api/utilities/_autosummary/pyvista.Color.html
     sel_regions_1 : dictionary mapping MDAnalysis AtomGroups to strings
         The colors for selected regions of the first protein.  Large selections slow
         the initial rendering.
