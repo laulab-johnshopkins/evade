@@ -169,7 +169,7 @@ class ProteinSurface:
 
 
 
-vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8, "SE" : 1.9, "Se" : 1.9}
+vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8, "SE" : 1.9, "Se" : 1.9, "ZN" : 1.39, "Zn" : 1.39}
 
 
 def align_to_pocket(protein_surf, pocket_shape, universe,
