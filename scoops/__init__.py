@@ -2,5 +2,4 @@
 # to individually import each file (e.g. `import scoops.volumes`).
 
 from . import volumes
-from . import ops_from_volumes
 from . import dihedrals

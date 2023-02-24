@@ -382,6 +382,40 @@ def get_pocket_atoms(protein_surface_obj, pocket_surf, universe):
     mda_atomgroup = universe.select_atoms(sel_str)
     pocket_surf = ProteinSurface(mda_atomgroup, surf=pocket, atom_geo_list=atom_geo_list)
     return pocket_atoms, pocket_surf
+    
+    
+def get_pocket_residues(protein_surface_obj, pocket_surf, universe):
+    """
+    Get a list of residues that border the pocket.
+    
+    Get the residue indices of each residue containing
+    at least one atom that borders the pocket.  The indices are the
+    0-indexed numbers assigned by MDAnalysis; these may differ from
+    the numbers given in the trajectory.
+    
+    Parameters
+    ----------
+    protein_surface_obj : ProteinSurface
+        The protein molecule.  The object must be
+        the ProteinSurface type defined in this software.
+    pocket_surf : trimesh VoxelGrod
+        The pocket.
+    universe : MDAnalysis universe
+        The universe object that the data are taken from.
+        
+    Returns
+    -------
+    pocket_residues : list
+        A list of each residue index
+    """
+    
+    pocket_atoms, surf_with_atoms = get_pocket_atoms(protein_surface_obj, pocket_surf, universe)
+    pocket_residues = []
+    for atom in pocket_atoms:
+        this_res = atom.mda_atomgroup[0].resindex
+        pocket_residues.append(this_res)
+    pocket_residues = list(set(pocket_residues))
+    return pocket_residues
 
 
 def write_voxels_to_pdb(voxel_grid, pdb_filename):
@@ -993,3 +1027,4 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
     if object_2 or object_3:
         pl.link_views()
     pl.show()
+
