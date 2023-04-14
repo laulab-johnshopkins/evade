@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import scipy.stats
 import MDAnalysis as mda
@@ -5,17 +6,18 @@ import MDAnalysis.analysis.dihedrals
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sklearn.feature_selection
+import tqdm
 
 
-def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, stop=None):
+def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, stop=None,
+                                    dihedrals_to_include=["phi", "psi", "chi1", "chi2"],
+                                    sort_by = "resindex"):
     """
-    Get the dihedrals for a residue across an MD trajectory.
+    Get the dihedrals for all residue across an MD trajectory.
 
-    This function gets the phi, psi, chi1, and chi2 dihedrals for a residue.
-    Any undefined angles are set to `None`.  In most cases the chi1 and chi2
-    angles are shifted from [-180, 180] to [0, 360] using the equation
-    `(angle + 360) % 360`.  But for CYS, SER, THR, VAL, and PRO, chi2 is
-    undefined and chi1 is in [-180, 180].
+    This function gets the phi, psi, chi1, and chi2 dihedrals for all residues.
+    Note that some angles aren't defined for some residues.  E.g. the phi and psi angles
+    may not be present at the ends of chains, and certain residues don't have chi1 and chi2.
 
     Parameters
     ----------
@@ -35,179 +37,234 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
         This controls which frame to end with.  Frames at or after `stop` are ignored.  E.g. if
         `stop=10` and `start=None`, then the code will analyze the first 10 frames (indices 0-9).
         The default value of `None` causes the code to go until the end of the trajectory.
+    dihedrals_to_include : list, optional
+        Controls which dihedrals are calculated.  The default is `["phi", "psi", "chi1", "chi2"]`.
+    sort_by : string, optional
+        Controls how the dihedrals are ordered in the output.  The default is `"resindex"`, which
+        groups the dihedrals by residue.  (E.g. `["5_phi", "5_psi", "6_phi", "6_psi"]` if only phi and
+        psi are calculated.)  The alternative is `sort_by = "dihedral"`.  This lists all the phis,
+        then all the psis, etc.
 
     Returns
     -------
-    dihed_dict : nested dictionary
-        This stores the values across the MD trajectory of each residue's
-        dihedrals.  Dihedrals are accessed using
-        `dihed_dict[resindex][dihedral]`, e.g. `dihed_dict[3]["psi"]`.
-        Available dihedrals are "phi", "psi", "chi1", and "chi2".  Each
-        dihedral is a 1D array of angles, or `None` for undefined dihedrals.
+    all_dihedral_labels : list
+        The ordered list of which dihedrals are stored in `all_dihedrals`.
+    all_dihedrals : numpy array
+        An n-by-m array, where n is the number of dihedrals and m is the number of trajectory frames.
     """
+    
+    # If `dihedrals_to_include` omits any of these, then they intentionally stay empty.
+    residues_with_phi = []
+    residues_with_psi = []
+    residues_with_chi1 = []
+    residues_with_chi2 = []
+    
+    if "phi" in dihedrals_to_include:
+        # Get list of residues that have phi dihedral.
+        phi_sel_with_none = u.residues[resindex_list].phi_selections()
+        for i in range(len(phi_sel_with_none)):
+            if phi_sel_with_none[i] is not None:
+                residues_with_phi.append(resindex_list[i])
+        # Get an array of phi dihedrals.  Each row is the result for a residue.
+        phi_sel_without_none = list(filter(None, phi_sel_with_none))
+        phi_object = mda.analysis.dihedrals.Dihedral(phi_sel_without_none).run(step=step, start=start,
+                                                                               stop=stop)
+        phi_angles = phi_object.results.angles.T
+    
+    if "psi" in dihedrals_to_include:
+        # Get list of residues that have psi dihedral.
+        psi_sel_with_none = u.residues[resindex_list].psi_selections()
+        for i in range(len(psi_sel_with_none)):
+            if psi_sel_with_none[i] is not None:
+                residues_with_psi.append(resindex_list[i])
+        # Get an array of psi dihedrals.  Each row is the result for a residue.
+        psi_sel_without_none = list(filter(None, psi_sel_with_none))
+        psi_object = mda.analysis.dihedrals.Dihedral(psi_sel_without_none).run(step=step, start=start,
+                                                                               stop=stop)
+        psi_angles = psi_object.results.angles.T
+    
+    if "chi1" in dihedrals_to_include:
+        # Get list of residues that have chi1 dihedral.
+        chi1_sel_with_none = u.residues[resindex_list].chi1_selections()
+        for i in range(len(chi1_sel_with_none)):
+            if chi1_sel_with_none[i] is not None:
+                residues_with_chi1.append(resindex_list[i])
+        # Get an array of chi1 dihedrals.  Each row is the result for a residue.
+        chi1_sel_without_none = list(filter(None, chi1_sel_with_none))
+        chi1_object = mda.analysis.dihedrals.Dihedral(chi1_sel_without_none).run(step=step, start=start,
+                                                                                 stop=stop)
+        chi1_angles = chi1_object.results.angles.T  
+    
+    if "chi2" in dihedrals_to_include:
+        # Get chi2 dihedrals.  MDAnalysis only finds chi2 through the Janin function.
+        chi2_angles = []
+        # The select_remove argument is an MDAnalysis default value.  I included it in case MDAnalysis's
+        # default ever changes, to reduce the likelihood of the code breaking.
+        removed_residues = "resname ALA CYS* GLY PRO SER THR VAL"
+        janin_object = mda.analysis.dihedrals.Janin(u.residues[resindex_list].atoms,
+                                                    select_remove=removed_residues).run(step=step,
+                                                                                        start=start,
+                                                                                        stop=stop)
+        janin_angles = janin_object.results.angles
+        # The Janin function returns angles between 0 and 360.  The standard chi1 and chi2
+        # definitions allow values between -180 and 180.
+        vectorized_math_remainder = np.vectorize(math.remainder)
+        janin_angles = vectorized_math_remainder(janin_angles, 360)
+        # Determine which residues have chi2.
+        janin_index = 0 # track how many residues taken from Janin data
+        for residue in u.residues[resindex_list]:
+            # This removes all the residues that the `select_remove` argument removed from the Janin
+            # dataset.  These are the residues for which chi2 isn't defined.
+            if ((residue.resname not in ["ALA", "GLY", "CYS", "SER", "THR", "VAL", "PRO"]) and 
+                (residue.resname[0:3] != "CYS")):
+                chi2_angles_this_res = janin_angles[:,janin_index][:,1]
+                residues_with_chi2.append(residue.resindex)
+                chi2_angles.append(chi2_angles_this_res)
+                janin_index += 1
 
-    dihed_dict = {}
-    for resindex in resindex_list:
-        residuegroup = u.residues[resindex : resindex+1]
+    if sort_by == "resindex":
+        # Combine all dihedrals into a single list.  The list is ordered by residue.
+        all_dihedrals = []
+        all_dihedral_labels = []
+        for resindex in resindex_list:
+            if resindex in residues_with_phi:
+                phi_index = residues_with_phi.index(resindex)
+                phi_vals = phi_angles[phi_index]
+                all_dihedrals.append(phi_vals)
+                all_dihedral_labels.append("%d_phi" %(resindex))
+            if resindex in residues_with_psi:
+                psi_index = residues_with_psi.index(resindex)
+                psi_vals = psi_angles[psi_index]
+                all_dihedrals.append(psi_vals)
+                all_dihedral_labels.append("%d_psi" %(resindex))
+            if resindex in residues_with_chi1:
+                chi1_index = residues_with_chi1.index(resindex)
+                chi1_vals = chi1_angles[chi1_index]
+                all_dihedrals.append(chi1_vals)
+                all_dihedral_labels.append("%d_chi1" %(resindex))
+            if resindex in residues_with_chi2:
+                chi2_index = residues_with_chi2.index(resindex)
+                chi2_vals = chi2_angles[chi2_index]
+                all_dihedrals.append(chi2_vals)
+                all_dihedral_labels.append("%d_chi2" %(resindex))
+    
+    elif sort_by == "dihedral":
+        all_dihedrals = []
+        all_dihedral_labels = []
+        for dihedral in dihedrals_to_include:
+            if dihedral == "phi":
+                for resindex in resindex_list:
+                    if resindex in residues_with_phi:
+                        phi_index = residues_with_phi.index(resindex)
+                        phi_vals = phi_angles[phi_index]
+                        all_dihedrals.append(phi_vals)
+                        all_dihedral_labels.append("%d_phi" %(resindex))
+            elif dihedral == "psi":
+                for resindex in resindex_list:
+                    if resindex in residues_with_psi:
+                        psi_index = residues_with_psi.index(resindex)
+                        psi_vals = psi_angles[psi_index]
+                        all_dihedrals.append(psi_vals)
+                        all_dihedral_labels.append("%d_psi" %(resindex))
+            elif dihedral == "chi1":
+                for resindex in resindex_list:
+                    if resindex in residues_with_chi1:
+                        chi1_index = residues_with_chi1.index(resindex)
+                        chi1_vals = chi1_angles[chi1_index]
+                        all_dihedrals.append(chi1_vals)
+                        all_dihedral_labels.append("%d_chi1" %(resindex))
+            elif dihedral == "chi2":
+                for resindex in resindex_list:
+                    if resindex in residues_with_chi2:
+                        chi2_index = residues_with_chi2.index(resindex)
+                        chi2_vals = chi2_angles[chi2_index]
+                        all_dihedrals.append(chi2_vals)
+                        all_dihedral_labels.append("%d_chi2" %(resindex))
+                
+    return all_dihedral_labels, np.array(all_dihedrals)
 
-        phi_sel = [res.phi_selection() for res in residuegroup]
-        if phi_sel[0]:
-            phi_angles_obj = mda.analysis.dihedrals.Dihedral(phi_sel).run(step=step, start=start,
-                                                                          stop=stop)
-            phi_angles = phi_angles_obj.results.angles.flatten()
-        else:
-            print("WARNING: residue doesn't have phi dihedral.  It might be at the end of a chain.")
-            phi_angles = None
 
-        psi_sel = [res.psi_selection() for res in residuegroup]
-        if psi_sel[0]:
-            psi_angles_obj = mda.analysis.dihedrals.Dihedral(psi_sel).run(step=step, start=start,
-                                                                          stop=stop)
-            psi_angles = psi_angles_obj.results.angles.flatten()
-        else:
-            print("WARNING: residue doesn't have psi dihedral.  It might be at the end of a chain.")
-            psi_angles = None
-
-        if u.residues[resindex].resname in ["ALA", "GLY"]:
-            chi1_angles = None
-            chi2_angles = None
-
-        elif u.residues[resindex].resname in ["CYS", "SER", "THR", "VAL", "PRO"]:
-            chi1_sel = [res.chi1_selection() for res in residuegroup]
-            chi1_angles_obj = mda.analysis.dihedrals.Dihedral(chi1_sel).run(step=step, start=start,
-                                                                            stop=stop)
-            chi1_angles = chi1_angles_obj.results.angles.flatten()
-            chi2_angles = None
-
-        else:
-            janin_obj = mda.analysis.dihedrals.Janin(u.residues[resindex].atoms)
-            janin_results = janin_obj.run(step=step, start=start, stop=stop)
-            chi1_angles = janin_results.results.angles[:,:,0][::].flatten()
-            chi2_angles = janin_results.results.angles[:,:,1][::].flatten()
-
-        dihed_dict[resindex] = {"phi":phi_angles, "psi":psi_angles, "chi1":chi1_angles,
-                                   "chi2":chi2_angles}
-    return dihed_dict
-
-
-def get_key_pocket_dihedrals(pocket_resindex_list, all_resindex_list, dict_all_res_diheds, u,
-                             neighbors_to_exclude, score_cutoff, score):
+def get_dihedral_score_matrix(dihed_vals, score):
     """
-    Find pocket residues whose dihedrals are related to dihedrals elsewhere in the protein.
+    Get a matrix containing relatedness scores between dihedrals.
 
-    Compare each pocket residue's dihedrals to all dihedrals in the protein.  Find all pocket
-    dihedrals who are related (using mutual information or Pearson coefficient) to other
-    dihedrals.  If a residue pair has multiple correlated dihedrals that correlate, only show the
-    most-correlated dihedral pair.
+    This function does an all-against-all comparison using a specified scoring metric.
 
     Parameters
     ----------
-    pocket_resindex_list : list (or 1D array) of integers
-        The 0-indexed residue index assigned by MDAnalysis to each residue of the pocket.
-    all_resindex_list : list (or 1D array) of integers
-        The 0-indexed residue index assigned by MDAnalysis to each residue of the protein.
-    dict_all_res_diheds : dictionary
-        The output of `get_dihedrals_for_resindex_list` for all residues in `all_resindex_list`.
-    u : MDAnalysis universe
-        The universe object that the data are taken from.
-    neighbors_to_exclude : integer
-        The number of neighbors on each side of the pocket atom to exclude.  E.g. if
-        `neighbors_to_exclude=0` then a pocket residue will be compared to its neighbors; if
-        `neighbors_to_exclude=1` then the pocket residue won't be compared to the residues on
-        either side of it.
-    score_cutoff : float
-        Only show dihedral pairings whose score (Pearson or mutual information) exceeds
-        `score_cutoff`.
+    dihed_vals : numpy array
+        The output of `get_dihedrals_for_resindex_list`.
     score : string
         Either 'pearson' or 'mut_inf'.  Controls whether Pearson correlation coefficient or mutual
         information is used.
 
     Returns
     -------
-    dict_pocket_resindex_to_scores : dictionary
-        This stores Pearson coefficients or mutual informations of pairs of dihedrals that are
-        highly related.  Each key is an index (0-indexed; assigned by MDAnalysis) of a pocket
-        residue.  Each value is a list of two lists.  The first contains strings labeling
-        which dihedrals are being compared; the second contains the score for that pair.
+    score_matrix : numpy array
+        A square matrix containing scores for pairs of dihedrals.
     """
 
-    dict_pocket_resindex_to_scores = {}
+    # Convert all angles from [-180, 180] to [0, 360].  Procedure taken from
+    # MDAnalysis Janin code.
+    dihed_vals = (dihed_vals + 360) % 360
 
-    for pocket_resindex in pocket_resindex_list:
-        max_dihed_labels = []
-        max_mut_infs = []
-        print("Checking pocket residue", pocket_resindex)
-        for resindex in all_resindex_list:
-            residue = u.residues[resindex]
-            scores_this_res_pair = []
-            dihed_labels_this_res_pair = []
-            if abs(residue.resindex - pocket_resindex) <= neighbors_to_exclude:
-                continue
-            for pocket_dihed_name, pocket_dihed_vals in dict_all_res_diheds[pocket_resindex].items():
-                for dihed_name, dihed_vals in dict_all_res_diheds[residue.resindex].items():
-                    if (pocket_dihed_vals is None) or (dihed_vals is None):
-                        continue
-                    if score == "pearson":
-                        score_val = scipy.stats.pearsonr(pocket_dihed_vals, dihed_vals)[0]
-                    elif score == "mut_inf":
-                        pocket_dihed_vals_reshaped = pocket_dihed_vals.reshape(-1, 1)
-                        score_val = sklearn.feature_selection.mutual_info_regression(pocket_dihed_vals_reshaped,
-                                                                                 dihed_vals)[0]
-                    else:
-                        raise ValueError("Score must be 'pearson' or 'mut_inf'")
-                    label = "%d_%s_vs_%d_%s" %(pocket_resindex, pocket_dihed_name,
-                                               residue.resindex, dihed_name)
-                    dihed_labels_this_res_pair.append(label)
-                    scores_this_res_pair.append(score_val)
-            scores_array = np.array(scores_this_res_pair)
-            max_score = max(scores_array)
-            if max_score > score_cutoff:
-                max_score_index = np.argmax(scores_array)
-                max_mut_infs.append(max_score)
-                max_mut_inf_label = dihed_labels_this_res_pair[max_score_index]
-                max_dihed_labels.append(max_mut_inf_label)
-        dict_pocket_resindex_to_scores[pocket_resindex] = [max_dihed_labels, np.array(max_mut_infs)]
-    return dict_pocket_resindex_to_scores
+    dihed_vals = np.radians(dihed_vals)
 
+    if score == "inv_cov" or score == "covariance" or score == "circ_corr":
+        # Linear covariance for a sample of size N is the sum of (x - x_mean)(y - y_mean) / (N - 1).
+        # For circular covariance, the sine is taken so the covariance is 
+        # the sum of sin(x - x_mean) * sin(y - y_mean) / (N - 1).
+        dihed_averages = scipy.stats.circmean(dihed_vals, axis=1, low=0, high=2*np.pi)
 
-def graph_high_scores(dict_pocket_resindex_to_score, dihed_dict, rcparams={}):
-    """
-    Graph each high-scoring dihedral pair.
-   
-    Create a KDE plot comparing each high-scoring dihedral pair.  Although this function
-    provides a quick way to inspect data, publication-quality graphs may require additional
-    customization.
-   
-    Parameters
-    ----------
-    dict_pocket_resindex_to_score : dictionary
-        The output of `get_key_pocket_dihedrals`
-    dihed_dict : dictionary
-        The output of `get_dihedrals_for_resindex_list`
-    rcparams : dictionary
-        Parameters passed to matplotlib.pyplot's rcparams.  E.g. rcparams={"figure.figsize":(3,3)}
-        would set figures to be 3x3.
-    """
+        # This subtraction is simpler than the one used in the Liu/Amaral/Keten code.  Once
+        # the sine is taken, the two results are identical.
+        angles_minus_averages = dihed_vals - dihed_averages[:,None]
+        
+        sin_angles_minus_avg = np.sin(angles_minus_averages)
+        
+        num_frames = len(dihed_vals[0])
+        covariance_matrix = np.matmul(sin_angles_minus_avg, sin_angles_minus_avg.T) / (num_frames-1)
+    if score == "inv_cov":
+        inverse_covariance_matrix = np.linalg.pinv(covariance_matrix)
+        score_matrix = inverse_covariance_matrix
+        return score_matrix
+    elif score == "covariance":
+        score_matrix = covariance_matrix
+        return score_matrix
+    elif score == "circ_corr":
+        '''
+        # The correlation coefficient is the covariance divided by the product of each variable's
+        # standard deviation.  See https://en.wikipedia.org/wiki/Covariance_and_correlation.
+        stds = astropy.stats.circstats.circstd(dihed_vals, axis=1) ** 2
+        std_products = np.outer(stds, stds)
+        corr_matrix = covariance_matrix / std_products
+        return corr_matrix'''
+        variances = np.diagonal(covariance_matrix)
+        #stds = np.sqrt(variances)
+        #std_products = np.outer(stds, stds)
+        variance_products = np.outer(variances, variances)
+        std_products = np.sqrt(variance_products)
+        
+        corr_matrix = covariance_matrix / std_products
+        return corr_matrix
 
-    for param, value in rcparams.items():
-        plt.rcParams[param] = value
+    elif score == "mut_inf":
+        dihed_vals_transpose = np.array(dihed_vals).T
+        
+        def update_bar(task):
+            # See https://stackoverflow.com/questions/71968890/multiprocessing-with-map-async-and-progress-bar
+            pbar.update()
 
-    for pocket_resindex, scores in dict_pocket_resindex_to_score.items():
-        for i in range(len(scores[0])):
-            short_label = scores[0][i]
-            score = scores[1][i]
+        def mut_inf_for_row(row_index):
+            return sklearn.feature_selection.mutual_info_regression(dihed_vals_transpose, dihed_vals[row_index])
 
-            pocket_dihedral = short_label.split("_")[1]
-            other_resindex = int(short_label.split("_")[2])
-            other_dihedral = short_label.split("_")[3]
+        num_angles = len(dihed_vals)
+        # Pool() defaults to use number of processes equal to os.cpu_count().
+        with Pool() as pool:
+            with tqdm.tqdm(total=num_angles) as pbar:
+                # The callback function is called each time the pool returns a result.
+                async_results = [pool.apply_async(mut_inf_for_row, args=(x,), callback=update_bar)
+                                 for x in range(num_angles)]
+                mut_inf_matrix = [async_result.get() for async_result in async_results]
 
-            pocket_dihed_vals = dihed_dict[pocket_resindex][pocket_dihedral]
-            other_dihed_vals = dihed_dict[other_resindex][other_dihedral]
-
-            print("score:", score)
-            sns.kdeplot(x=pocket_dihed_vals, y=other_dihed_vals, fill=True,
-                        cmap="gnuplot2_r")
-            sns.kdeplot(x=pocket_dihed_vals, y=other_dihed_vals, color="black")
-            plt.xlabel("0-Indexed Residue %d %s" %(pocket_resindex, pocket_dihedral))
-            plt.ylabel("0-Indexed Residue %d %s" %(other_resindex, other_dihedral))
-            plt.show()
+        return mut_inf_matrix
