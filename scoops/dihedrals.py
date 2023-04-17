@@ -195,8 +195,8 @@ def get_dihedral_score_matrix(dihed_vals, score):
     dihed_vals : numpy array
         The output of `get_dihedrals_for_resindex_list`.
     score : string
-        Either 'pearson' or 'mut_inf'.  Controls whether Pearson correlation coefficient or mutual
-        information is used.
+        Either 'inv_cov' or 'covariance' or 'circ_corr' or 'mut_inf.  Controls which
+        score metric is used.
 
     Returns
     -------
