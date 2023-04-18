@@ -12,14 +12,6 @@ scoops.dihedrals module
    :undoc-members:
    :show-inheritance:
 
-scoops.ops\_from\_volumes module
---------------------------------
-
-.. automodule:: scoops.ops_from_volumes
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 scoops.volumes module
 ---------------------
 

@@ -1,5 +1,14 @@
 # Developer Guide
-## Generating Documentation
+
+## Table of Contents
+[Generating Documentation](#gen_docs)
+
+[Generating Requirements.txt](#gen_reqs)
+
+[Imports](#imports)
+
+[Testing](#testing)
+## <a name="gen_docs"></a>Generating Documentation
 Documentation is stored in the `doc` directory.  There are two parts:
 
 1. API docs listing each function.  These are automatically generated from docstrings in the code.
@@ -45,11 +54,22 @@ To recreate this directory, do the following:
       * Under the `toctree` command, you can add filenames.  E.g. add `page1` if there is a `page1.rst` file.  Note that the rst file must have a title for autodoc to include it.q
   * The relative imports in my modules (the `.` in `from .module1 import *`) are needed to get Sphinx to not complain.
 
-## Preparing For Installation
+## <a name="gen_reqs"></a>Generating Requirements.txt
 * `poetry export --without-hashes -f requirements.txt --output requirements.txt`
   * I would like to include hashes in requirements.txt.  This would increase security during software installation.  However, as described [here](https://github.com/python-poetry/poetry/issues/7122), poetry doesn't create hashes for some libraries.  This was observed to be an issue for a few SCOOPS dependencies.
 
-## Adding Functions To The Code
+## <a name="imports"></a>Imports
 Code is listed in `__init__.py`.  This tells Python where to look for the code.  If `__init__.py` were blank, then users would need to explicitly import each submodule (`from a_module import a_submodule`).  Including code in `__init__.py` allows users to import all code by importing the base module.
 
 Prototype versions of the software had everything in a single file.  Each function was imported in `__init__.py` (e.g. `from .volume_finder import show_pocket`).  Now each submodule is listed in `__init__.py`.
+
+## <a name="testing"></a>Testing
+To run the tests:
+
+* Install Astropy and pytest.
+* Run the command `pytest`.  The result will probably include warnings, but all tests should pass.
+
+To check code coverage:
+
+* Install the `coverage` Python package.
+* Run the command `coverage run -m pytest` then `coverage report`.  Replacing the second command with `coverage html` will give more detailed info.

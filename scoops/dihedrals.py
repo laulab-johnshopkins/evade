@@ -3,6 +3,7 @@ import numpy as np
 import scipy.stats
 import MDAnalysis as mda
 import MDAnalysis.analysis.dihedrals
+from multiprocess import Pool
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sklearn.feature_selection
@@ -180,6 +181,8 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
                         chi2_vals = chi2_angles[chi2_index]
                         all_dihedrals.append(chi2_vals)
                         all_dihedral_labels.append("%d_chi2" %(resindex))
+    else:
+        raise ValueError("sort_by must be resindex or dihedral")
                 
     return all_dihedral_labels, np.array(all_dihedrals)
 

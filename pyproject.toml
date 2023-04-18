@@ -22,6 +22,7 @@ numpy-indexed = "^0.3.5"
 ipyvtklink = "^0.2.3"
 scikit-learn = "^1.2.1"
 tqdm = "^4.65.0"
+multiprocess = "^0.70.14"
 
 [tool.poetry.dev-dependencies]
 
