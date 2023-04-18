@@ -734,6 +734,7 @@ def voxel_or(voxel_grid_1, voxel_grid_2):
     voxel_grid_2 : trimesh VoxelGrid object
         Second shape to be combined.  Must have same pitch
         in each dimension (and same pitch as voxel_grid_1).
+
     Returns
     -------
     trimesh VoxelGrid object
@@ -841,6 +842,13 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
     sel_regions_3 : dictionary mapping MDAnalysis AtomGroups to color-name strings, optional
         The colors for selected regions of object_3.  See the `sel_regions_1` description for
         more info.
+
+    Returns
+    -------
+    PyVista Plotter object
+        The PyVista plotter object that is shown.  It isn't usually necessary to use this
+        object, but it allows settings to be changed.  E.g. plotter_obj.set_background("gray")
+        changes the background color.
     """
 
     # If object_1 is a ProteinSurface, then the user can select regions of it to have different
@@ -1026,5 +1034,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
     # Show the shapes.
     if object_2 or object_3:
         pl.link_views()
+    
+    pl.fly_to(pl.pickable_actors[0].center)
     pl.show()
-
+    return pl
