@@ -1,4 +1,7 @@
+[![CI Tests](https://github.com/DanielJamesEvans/scoops/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/scoops/actions/workflows/python-app.yml)
+
 # SCOOPS
+
 SCOOPS analyzes binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.
 
 ## Installation
