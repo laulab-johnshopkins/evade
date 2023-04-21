@@ -42,16 +42,21 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
         Controls which dihedrals are calculated.  The default is `["phi", "psi", "chi1", "chi2"]`.
     sort_by : string, optional
         Controls how the dihedrals are ordered in the output.  The default is `"resindex"`, which
-        groups the dihedrals by residue.  (E.g. `["5_phi", "5_psi", "6_phi", "6_psi"]` if only phi and
+        groups the dihedrals by residue.  (E.g. the code would return
+        `["5_phi", "5_psi", "6_phi", "6_psi"]` if only phi and
         psi are calculated.)  The alternative is `sort_by = "dihedral"`.  This lists all the phis,
         then all the psis, etc.
 
     Returns
     -------
     all_dihedral_labels : list
-        The ordered list of which dihedrals are stored in `all_dihedrals`.
+        The ordered list of which dihedrals are stored in `all_dihedrals`.  Entries are formatted
+        like `"5_chi1"` where the number is the 0-indexed residue number assigned by MDAnalysis.
+        Note that the numbers in `all_dihedral_labels` are likely to differ from the residue
+        indices used by the MD data's topology file.
     all_dihedrals : numpy array
         An n-by-m array, where n is the number of dihedrals and m is the number of trajectory frames.
+        Angles are in radians and range from -pi to +pi.
     """
     
     # If `dihedrals_to_include` omits any of these, then they intentionally stay empty.
@@ -184,7 +189,9 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
     else:
         raise ValueError("sort_by must be resindex or dihedral")
                 
-    return all_dihedral_labels, np.array(all_dihedrals)
+    all_dihedrals_array = np.array(all_dihedrals)
+    all_dihedrals_radians = np.radians(all_dihedrals_array)
+    return all_dihedral_labels, all_dihedrals_radians
 
 
 def get_dihedral_score_matrix(dihed_vals, score):
@@ -206,12 +213,6 @@ def get_dihedral_score_matrix(dihed_vals, score):
     score_matrix : numpy array
         A square matrix containing scores for pairs of dihedrals.
     """
-
-    # Convert all angles from [-180, 180] to [0, 360].  Procedure taken from
-    # MDAnalysis Janin code.
-    dihed_vals = (dihed_vals + 360) % 360
-
-    dihed_vals = np.radians(dihed_vals)
 
     if score == "inv_cov" or score == "covariance" or score == "circ_corr":
         # Linear covariance for a sample of size N is the sum of (x - x_mean)(y - y_mean) / (N - 1).
