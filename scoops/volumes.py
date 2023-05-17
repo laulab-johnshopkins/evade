@@ -697,6 +697,7 @@ def voxel_subtract(voxel_grid_1, voxel_grid_2):
     # Check which points from voxel_grid_1 are in voxel_grid_2.
     vox_1_without_2_points = [] # initialization
     # FIXME decimal place is magic number
+    # Source that float comparison after rounding is OK: https://docs.python.org/3/tutorial/floatingpoint.html
     vox_2_points = set(tuple(point) for point in voxel_grid_2.points.round(decimals=5).tolist())
     for point in voxel_grid_1.points.round(decimals=5).tolist():
         if tuple(point) not in vox_2_points:
@@ -781,7 +782,8 @@ def voxel_and(voxel_grid_1, voxel_grid_2):
 
     check_equal_pitches(voxel_grid_1, voxel_grid_2)
 
-    vox_1_and_2_points = npi.intersection(voxel_grid_1.points, voxel_grid_2.points)
+    # Source that float comparison after rounding is OK: https://docs.python.org/3/tutorial/floatingpoint.html
+    vox_1_and_2_points = npi.intersection(voxel_grid_1.points.round(decimals=5), voxel_grid_2.points.round(decimals=5))
 
     if len(vox_1_and_2_points) == 0:
         return None
