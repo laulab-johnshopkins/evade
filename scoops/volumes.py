@@ -6,6 +6,10 @@ import pyvista as pv
 import numpy_indexed as npi
 import scipy
 import scipy.stats
+from multiprocessing import Pool
+from multiprocessing.shared_memory import SharedMemory
+from functools import partial
+
 
 class AtomGeo:
     """A surface representation of an atom.
@@ -1040,3 +1044,88 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
     pl.fly_to(pl.pickable_actors[0].center)
     pl.show()
     return pl
+
+def _is_surf_atom(array_size_in_bytes, shape, index_and_points):
+    '''Internal function that should not be called directly by user.
+
+    Checks whether an atom is on the surface of the protein.
+
+    Parameters
+    ----------
+    array_size_in_bytes : integer
+        The size of an array containing each voxel of the protein surface.
+    shape : tuple of ints
+        The shape of the array containing each voxel of the protein surface.
+    index_and_points : tuple containing an int and an array
+        The first element is the MDAnalysis index of the atom. The second element is
+        an array containing the points of each voxel in the sphere.
+
+    Returns
+    -------
+    integer or `None`
+        If at least one voxel of the atom is on the protein surface, then
+        the atom's MDAnalysis index is returned.  Otherwise `None` is returned.
+    '''
+
+    index = index_and_points[0]
+    atom_points_array = index_and_points[1]
+
+    # See comment in `get_surface_atom_indices` for explanation of parallelization.
+    shared_mem = SharedMemory(name='m', size=array_size_in_bytes)
+    hollow_prot_points = np.ndarray(shape, dtype=np.float64, buffer=shared_mem.buf)
+
+    # Source that float comparison after rounding is OK: https://docs.python.org/3/tutorial/floatingpoint.html
+    surf_points = npi.intersection(hollow_prot_points.round(decimals=5), atom_points_array.round(decimals=5))
+
+    if len(surf_points) > 0:
+        return index
+    else:
+        return None
+
+def get_surface_atom_indices(protein_surf):
+    '''Determine which atoms are on a protein's surface.
+
+    Finds all atoms with at least one voxel on the surface of a protein.
+    This function is parallelized; it runs on all available CPU cores.
+
+    Parameters
+    ----------
+    protein_surf : `ProteinSurface` object
+        The protein of interest.
+
+    Returns
+    -------
+    `index_list` : list of ints
+        Returns the index (assigned by MDAnalysis) of each atom on the protein surface.
+        These MDAnalysis indices may differ from the indices used by the original input file.
+    '''
+
+    hollow_prot = protein_surf.surf.copy().hollow()
+    surf_points = np.array(hollow_prot.points)
+
+    # This code uses parallelization to divide the atoms among CPU cores.  It calls
+    # `_is_surf_atom` on each atom.  When doing this, Python's default behavior is to
+    #  pickle all arguments to `_is_surf_atom` (except for global variables) and send them
+    # to the worker processes.  This is inefficient for large variables.
+    #     The lines below include a workaround.  The code creates a `SharedVariable` that
+    # stores each point on the protein surface. Then each worker process (running `_is_surf_atom`)
+    # can read the shared variable.  This prevents the surface points from being pickled/unpickled.
+    array_size_in_bytes = surf_points.itemsize * surf_points.size
+    shared_mem = SharedMemory(name='m', size=array_size_in_bytes, create=True)
+    shape, dtype = surf_points.shape, surf_points.dtype
+    points_for_share = np.recarray(shape=shape, dtype=dtype, buf=shared_mem.buf)
+    points_for_share[:] = surf_points[:]
+
+    is_surf_atom_partial = partial(_is_surf_atom, array_size_in_bytes, shape)
+
+    all_atom_points = []
+    for atom_geo in protein_surf.atom_geo_list:
+        all_atom_points.append(np.array(atom_geo.voxel_sphere.points))
+
+    with Pool() as pool:
+        index_and_points = [(protein_surf.atom_geo_list[i].mda_atomgroup[0].index, all_atom_points[i])
+                            for i in range(len(all_atom_points))]
+        indices_and_nones = pool.map(is_surf_atom_partial, index_and_points)
+        index_list = [index for index in indices_and_nones if index is not None]
+        shared_mem.unlink()
+    return index_list
