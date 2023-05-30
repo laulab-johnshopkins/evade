@@ -1129,3 +1129,90 @@ def get_surface_atom_indices(protein_surf):
         index_list = [index for index in indices_and_nones if index is not None]
         shared_mem.unlink()
     return index_list
+
+
+def get_pocket(pocket_region, mda_atomgroup, solvent_rad):
+    """
+    Find voxels of a pocket region that do not overlap with the protien.
+
+    This function measures the distance between each voxel's center and
+    each protein atom.  It keeps voxels that are outside the atoms' van der
+    Waals radii plus the solvent radius.  This is the procedure used by POVME.
+
+    Parameters
+    ----------
+    pocket_region : Trimesh VoxelGrid
+        The region containing the pocket.
+
+    mda_atomgroup : MDAnalysis Atomgroup
+        All the atoms to be included in the surface.  The Universe
+        should be at the frame of interest.  This parameter can also be
+        an MDAnalysis Universe if all atoms should be included.  
+    universe : MDAnalysis Universe
+        A Universe containing the MD data.  It should be at
+        the frame of interest.
+    solvent_rad : float
+        The radius (in Angstroms) to be added to each atom's van der Waals radius.
+        This parameter excludes space that is too close to the protein to be
+        solvent-accessible.
+
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A trimesh VoxelGrid object containing the part of `pocket_region` that
+        does not overlap with the protein.
+    """
+
+    # Get an ordered list of the van der Waals radii of each atom.
+    vdw_rads = {"C": 1.7, "H" : 1.2, "N" : 1.55, "O" : 1.52, "S" : 1.8, "SE" : 1.9, "Se" : 1.9,
+                "ZN" : 1.39, "Zn" : 1.39}
+    vdw_rad_list = []
+    for atom in mda_atomgroup.atoms:
+        element = mda.topology.guessers.guess_atom_element(atom.type)
+        vdw_rad_list.append(vdw_rads[element])
+
+    #Get the distances between all voxel points and all protein atoms.
+    dists = scipy.spatial.distance.cdist(pocket_region.points, mda_atomgroup.atoms.positions)
+    
+    # Keep the voxels that are sufficiently far from all protein atoms.
+    keep_array = np.all(dists > (np.array(vdw_rad_list) + solvent_rad), axis=1)
+    keep_points = pocket_region.points[keep_array]
+    
+    # Construct a VoxelGrid from the chosen points.
+    assert pocket_region.pitch[0] == pocket_region.pitch[1] == pocket_region.pitch[2]
+    grid_size = pocket_region.pitch[0]
+    keep_shape = surf_from_points(keep_points, grid_size)
+    return keep_shape
+
+
+def surf_from_points(points, grid_size):
+    """
+    Construct a trimesh VoxelGrid from an array of voxel centers.
+
+    This function takes an array containing the centers of
+    each filled voxel.  It constructs a VoxelGrid with the correct
+    pitch.  This function is subject to floating-point imprecision.
+    That is OK because `voxel_and`, `voxel_subtract`, etc. have
+    tolerances for this.
+
+    Parameters
+    ----------
+    points : numpy array
+        The centers of each filled voxel.
+    grid_size : float
+        The length of a side of each voxel in the grid.
+    Returns
+    -------
+    trimesh VoxelGrid object
+        A trimesh VoxelGrid object containing the specified points.
+    """
+   
+    min_points_in_data = [min(points[:,0]), min(points[:,1]), min(points[:,2])]
+    indices = trimesh.voxel.ops.points_to_indices(points, pitch=grid_size, origin=min_points_in_data)
+    matrix = trimesh.voxel.ops.sparse_to_matrix(indices)
+    grid = trimesh.voxel.VoxelGrid(matrix)
+    grid.apply_scale(grid_size)
+    grid = grid.copy()
+    grid.apply_translation(min_points_in_data)
+    grid = grid.copy()
+    return grid
