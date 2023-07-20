@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import scipy.stats
+import pandas as pd
 import MDAnalysis as mda
 import MDAnalysis.analysis.dihedrals
 from multiprocess import Pool
@@ -49,13 +50,18 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
 
     Returns
     -------
-    all_dihedral_labels : list
-        The ordered list of which dihedrals are stored in `all_dihedrals`.  Entries are formatted
-        like `"5_chi1"` where the number is the 0-indexed residue number assigned by MDAnalysis.
-        Note that the numbers in `all_dihedral_labels` are likely to differ from the residue
-        indices used by the MD data's topology file.
-    all_dihedrals : numpy array
-        An n-by-m array, where n is the number of dihedrals and m is the number of trajectory frames.
+    all_dihedrals_df : pandas DataFrame
+        Each row stores the timeseries of a single dihedral's value over time.  Rows are
+        indexed/labeled like `"5_chi1"` where the number is the 0-indexed residue number assigned
+        by MDAnalysis.
+
+        Note that the MD data's topology file probably restarts its numbering
+        for each chain, while the numbers in `all_dihedrals_df` don't restart.  Furthermore, the numbers in `all_dihedrals_df`
+        are 0-indexed.  So the numbers probably differ from those in the MD tolology file.
+        
+        Also note that the numbers are accessed in MDAnalysis through the resindex property, but NOT through the
+        resid or resnum properties.
+
         Angles are in radians and range from -pi to +pi.
     """
     
@@ -191,10 +197,12 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
                 
     all_dihedrals_array = np.array(all_dihedrals)
     all_dihedrals_radians = np.radians(all_dihedrals_array)
-    return all_dihedral_labels, all_dihedrals_radians
+
+    all_dihedrals_df = pd.DataFrame(data=all_dihedrals_radians, index=all_dihedral_labels)
+    return all_dihedrals_df
 
 
-def get_dihedral_score_matrix(dihed_vals, score):
+def get_dihedral_score_matrix(dihedrals_df, score):
     """
     Get a matrix containing relatedness scores between dihedrals.
 
@@ -202,7 +210,7 @@ def get_dihedral_score_matrix(dihed_vals, score):
 
     Parameters
     ----------
-    dihed_vals : numpy array
+    dihedrals_df : pandas DataFrame
         The output of `get_dihedrals_for_resindex_list`.
     score : string
         Either 'inv_cov' or 'covariance' or 'circ_corr' or 'mut_inf.  Controls which
@@ -210,9 +218,12 @@ def get_dihedral_score_matrix(dihed_vals, score):
 
     Returns
     -------
-    score_matrix : numpy array
-        A square matrix containing scores for pairs of dihedrals.
+    score_df : pandas DataFrame
+        Contains a square matrix of scores for pairs of dihedrals.
     """
+
+    dihed_vals = dihedrals_df.to_numpy()
+    dihed_labels = dihedrals_df.index.tolist()
 
     if score == "inv_cov" or score == "covariance" or score == "circ_corr":
         # Linear covariance for a sample of size N is the sum of (x - x_mean)(y - y_mean) / (N - 1).
@@ -231,10 +242,12 @@ def get_dihedral_score_matrix(dihed_vals, score):
     if score == "inv_cov":
         inverse_covariance_matrix = np.linalg.pinv(covariance_matrix)
         score_matrix = inverse_covariance_matrix
-        return score_matrix
+        score_df = pd.DataFrame(data=score_matrix, index=dihed_labels, columns=dihed_labels)
+        return score_df
     elif score == "covariance":
         score_matrix = covariance_matrix
-        return score_matrix
+        score_df = pd.DataFrame(data=score_matrix, index=dihed_labels, columns=dihed_labels)
+        return score_df
     elif score == "circ_corr":
         '''
         # The correlation coefficient is the covariance divided by the product of each variable's
@@ -250,7 +263,8 @@ def get_dihedral_score_matrix(dihed_vals, score):
         std_products = np.sqrt(variance_products)
         
         corr_matrix = covariance_matrix / std_products
-        return corr_matrix
+        score_df = pd.DataFrame(data=corr_matrix, index=dihed_labels, columns=dihed_labels)
+        return score_df
 
     elif score == "mut_inf":
         dihed_vals_transpose = np.array(dihed_vals).T
@@ -271,4 +285,5 @@ def get_dihedral_score_matrix(dihed_vals, score):
                                  for x in range(num_angles)]
                 mut_inf_matrix = [async_result.get() for async_result in async_results]
 
-        return mut_inf_matrix
+        score_df = pd.DataFrame(data=mut_inf_matrix, index=dihed_labels, columns=dihed_labels)
+        return score_df
