@@ -287,3 +287,112 @@ def get_dihedral_score_matrix(dihedrals_df, score):
 
         score_df = pd.DataFrame(data=mut_inf_matrix, index=dihed_labels, columns=dihed_labels)
         return score_df
+
+
+def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=0.2, labels=False):
+    """
+    Write a PyMOL script for showing high-scoring pairs of dihedrals.
+    
+    The script assumes that a score of 0 represents no relationship, and high-magnitude scores (whether
+    positive or negative) represent strong relationships.  It draws lines between dihedral pairs whose scores
+    have magnitudes above a given percentile.  Lines are colored based on score magnitude: pairs with scores
+    close to the percentile cutoff get white lines, while pairs with higher-magnitude scores get blue lines.
+    
+    Lines are drawn between the alpha carbons of each residue in the pair.
+    
+    The function may not support all features needed for making complicated figures. If additional features
+    are needed, please copy the source code into your Python script and modify it accordingly.  (The code is
+    intentionally thoroughly commented.)
+    
+    Parameters
+    ----------
+    score_df : pandas DataFrame
+        The output of `get_dihedral_score_matrix`.
+    u : MDAnalysis universe
+        The universe object that the data are taken from.  The trajectory should be on the same frame as
+        `input_pdb_loc`.
+    percentile : integer
+        The percentile cutoff for which dihedral pairs will be displayed.  This should be a number between 1 and 100.
+    input_pdb_loc : string
+        The location of a PDB file containing the atoms in `u`, at the same frame as `u`.  This PDB file isn't
+        read by `show_network`; it is just added to the output PDB file.  So `show_network` will still run if
+        there are differences between `input_pdb_loc` and `u`.
+    output_script_loc : string
+        The location of the PyMOL script that `show_network` will write.  It should end in .pml.
+    rad : float, optional
+        The radius of the cylinders drawn between residues.  The default value is 0.2 Angstroms.
+    labels : boolean, optional
+        Whether to write labels for each line.  The labels list the resindex (assigned by MDAnalysis) of
+        each residue in the pair.  NOTE: these resindices may differ from the residue numbering used in the MD
+        trajectory and `input_pdb_loc`.
+    """
+    
+    ### Find the threshold for a score's magnitude to be above the percentile cutoff. ###
+    scores_abs_vals = np.abs(score_df.to_numpy().flatten())
+    # The ith element in `ranks` is the rank of the ith element of `scores_abs_vals`.  The
+    # highest score is ranked 0.
+    ranks = scores_abs_vals.argsort().argsort() # Yes, argsort is supposed to be called twice.
+    # Get the rank of the data point that serves as the percentile cutoff.  Any data points
+    # ranking above this will be shown in the output.
+    rank_of_nth_percentile = math.floor(len(ranks) * percentile / 100)
+    num_points_above_percentile = len(ranks) - rank_of_nth_percentile
+    score_cutoff_at_percentile = np.percentile(scores_abs_vals, percentile)
+    
+    ### Iterate over all pairs of residues.  For each pair, check whether the score is above ###
+    ### the cutoff.  If it is, draw a line. ###
+    all_dihed_labels = list(score_df.index)
+    # Each key is a string of the form "resindex1_resindex2".  The lower resindex is always first
+    # in the string.
+    # Each value is a list of the form [rank, pymol_code_string].  Here rank is the rank of the residue pair's
+    # top-scoring dihedral pair among all in the system.
+    included_res_pairs_dict = {}
+    for i in range(len(score_df)):
+        this_row = score_df.iloc[i]
+        for j in range(i, len(score_df)):
+            this_score = abs(this_row[j])
+            if this_score > score_cutoff_at_percentile:
+                res_i = int(all_dihed_labels[i].split("_")[0])
+                res_j = int(all_dihed_labels[j].split("_")[0])
+                # Determine where the score's magnitude ranks among all scores.
+                mat_size = len(score_df)
+                full_rows_passed = i * mat_size
+                pos_in_1d_array = j + full_rows_passed
+                rank = ranks[pos_in_1d_array]
+                rank_fraction_in_percentile =  (rank - rank_of_nth_percentile) / num_points_above_percentile
+                # High-ranked dihedral pairs are colored more strongly.
+                color = 1 - rank_fraction_in_percentile
+                res_i_atom = u.select_atoms("resindex %d and name CA" %(res_i))[0]
+                res_i_pos = res_i_atom.position
+                res_j_atom = u.select_atoms("resindex %d and name CA" %(res_j))[0]
+                res_j_pos = res_j_atom.position
+                
+                res_pair = "%d_%d" %(res_i, res_j)
+                this_str = ""
+                # The 9.0 indicates that the shape is a cylinder.  The remaining arguments are the
+                # x,y,z coordinates of the two ends of the cylinder, the radius, the r,g,b colors
+                # of each end of the cylinder, and the cylinder's name.
+                this_str += ('cmd.load_cgo([9.0, %f,%f,%f, %f,%f,%f, %f, %f,%f,1, %f,%f,1], "line_%d")\n'
+                             %(res_i_pos[0], res_i_pos[1], res_i_pos[2], res_j_pos[0], res_j_pos[1], res_j_pos[2],
+                               rad, color, color, color, color, rank))
+                if labels:
+                    # PyMOL requires that the label be placed at the location of a pseudoatom.  Create a
+                    # pseudoatom halfway along the line. Hide the pseudoatom itself.
+                    mid_pos = (res_i_pos + res_j_pos) / 2
+                    this_str += ("pseudoatom center_%d_%d, pos=[%f, %f, %f]\n" %(res_i, res_j, mid_pos[0], mid_pos[1], mid_pos[2]))
+                    this_str += ('label center_%d_%d, "res_%d_%d"\n' %(res_i, res_j, res_i, res_j))
+                    this_str += ("hide wire, center_%s\n" %(res_pair))
+                    
+                ### Sometimes two residues can have multiple dihedrals that are strongly related. ###
+                ### When this happens, only draw a line for the strongest pairing.  Otherwise the ###
+                ### script will draw overlapping lines with different colors. ###
+                if res_pair not in included_res_pairs_dict:
+                    included_res_pairs_dict[res_pair] = [rank, this_str]
+                else:
+                    other_dihed_rank = included_res_pairs_dict[res_pair][0]
+                    if rank > other_dihed_rank:
+                        included_res_pairs_dict[res_pair] = [rank, this_str]
+    
+    with open(output_script_loc, "w") as out_file:
+        out_file.write("load %s\n\n" %(input_pdb_loc))
+        for key, val in included_res_pairs_dict.items():
+            out_file.write(val[1])
