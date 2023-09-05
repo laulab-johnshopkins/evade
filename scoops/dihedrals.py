@@ -8,7 +8,6 @@ from multiprocess import Pool
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sklearn.feature_selection
-import tqdm
 
 
 def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, stop=None,
@@ -267,25 +266,41 @@ def get_dihedral_score_matrix(dihedrals_df, score):
         return score_df
 
     elif score == "mut_inf":
-        dihed_vals_transpose = np.array(dihed_vals).T
+        def mutual_information_two_rows(dihed_1_vals, dihed_2_vals):
+    
+            if not (dihed_1_vals.ndim == dihed_2_vals.ndim == 1):
+                raise ValueError("Both inputs must be 1D arrays.")
+            if len(dihed_1_vals) != len(dihed_2_vals):
+                raise ValueError("Both inputs must have the same length.")
+            
+            num_frames = len(dihed_1_vals)
+            bins = np.arange(-3.15, 3.16, 0.252) # 25 bins from -pi to pi.
+            hist_2d, x_edges, y_edges = np.histogram2d(dihed_1_vals, dihed_2_vals, bins=bins)
+
+            # a1 and a2 are given values of dihedral_1 and dihedral_2.  This code
+            # examines the probabilities of particular values of dihedral_1 and dihedral_2
+            # happening at the same frame.
+            p_a1_a2 = hist_2d / float(num_frames)
+            p_a1 = np.sum(p_a1_a2, axis=1)
+            p_a2 = np.sum(p_a1_a2, axis=0)
+            # p_a1_times_p_a2 is a 25x25 matrix.  Each element (i,j) is the
+            # probability of dihedral_1 taking a value in bin i, times the probability
+            # of dihedral_2 taking a value in bin j.
+            p_a1_times_p_a2 = np.outer(p_a1, p_a2)
+            nonzeros = p_a1_a2 > 0
+            return np.sum(p_a1_a2[nonzeros] * np.log(p_a1_a2[nonzeros] / p_a1_times_p_a2[nonzeros]))
         
-        def update_bar(task):
-            # See https://stackoverflow.com/questions/71968890/multiprocessing-with-map-async-and-progress-bar
-            pbar.update()
-
-        def mut_inf_for_row(row_index):
-            return sklearn.feature_selection.mutual_info_regression(dihed_vals_transpose, dihed_vals[row_index])
-
-        num_angles = len(dihed_vals)
-        # Pool() defaults to use number of processes equal to os.cpu_count().
-        with Pool() as pool:
-            with tqdm.tqdm(total=num_angles) as pbar:
-                # The callback function is called each time the pool returns a result.
-                async_results = [pool.apply_async(mut_inf_for_row, args=(x,), callback=update_bar)
-                                 for x in range(num_angles)]
-                mut_inf_matrix = [async_result.get() for async_result in async_results]
-
-        score_df = pd.DataFrame(data=mut_inf_matrix, index=dihed_labels, columns=dihed_labels)
+        output_array = np.zeros((len(dihed_vals), len(dihed_vals)))
+        print("output shape", output_array.shape)
+        for i in range(len(dihed_vals)):
+            print(i)
+            for j in range(i, len(dihed_vals)):
+                dihed_i_vals = dihed_vals[i]
+                dihed_j_vals = dihed_vals[j]
+                mut_inf_i_j = mutual_information_two_rows(dihed_i_vals, dihed_j_vals)
+                output_array[i][j] = mut_inf_i_j
+                output_array[j][i] = mut_inf_i_j
+        score_df = pd.DataFrame(data=output_array, index=dihed_labels, columns=dihed_labels)
         return score_df
 
 
