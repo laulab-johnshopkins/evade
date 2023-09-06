@@ -1042,7 +1042,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
         pl.link_views()
     
     pl.fly_to(pl.pickable_actors[0].center)
-    pl.show()
+    pl.show(jupyter_backend='trame')
     return pl
 
 def _is_surf_atom(array_size_in_bytes, shape, index_and_points):
