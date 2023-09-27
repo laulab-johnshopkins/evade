@@ -205,7 +205,8 @@ def align_to_pocket(protein_surf, pocket_shape, universe,
     psf_loc : string, optional
         If `copy_filename` is a DCD file, then MDAnalysis also needs a PSF file to read the data.
         If `copy_filename` is a PDB file, then `psf_loc` should not be provided.  (The default
-        value is `None`.)
+        value is `None`.)  `psf_loc` should already exist, and will not be modified by
+        `align_to_pocket`.
     step : integer or `None`, optional
         This controls how big of a step to take between frames.  E.g. a value of 1 would lead to
         aligning every frame; a value of 2 would lead to aligning every other frame.  (Skipped
