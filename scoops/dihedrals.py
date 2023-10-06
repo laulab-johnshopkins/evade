@@ -64,6 +64,10 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
         Angles are in radians and range from -pi to +pi.
     """
     
+    if len(resindex_list) > len(u.residues):
+        raise ValueError("resindex_list has more residues than the MDAnalysis universe.  Did you accidentally "
+                         "pass one resindex per atom, instead of one resindex per residue?")
+
     # If `dihedrals_to_include` omits any of these, then they intentionally stay empty.
     residues_with_phi = []
     residues_with_psi = []
