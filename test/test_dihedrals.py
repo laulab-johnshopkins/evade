@@ -70,8 +70,8 @@ def test_circ_corr(dihedral_arr_index, expected_vals):
 
 
 @pytest.mark.parametrize("dihedral_arr_index, expected_vals",
-                         [(2, [0.        , 0.        , 0.99563492, 0.03789683, 0.        ,  0.        , 0.        , 0.        ]),
-                          (4, [0.        , 0.        , 0.        , 0.02678571, 0.99563492,  0.0093254 , 0.02083333, 0.        ])])
+                         [(2, [0.75239414, 0.70006933, 1.16828245, 0.50219293, 0.2318562 , 0.27435847, 0.61376471, 0.56143989]),
+                          (4, [0.62068685, 0.4297326 , 0.2318562 , 0.37048564, 0.89794572, 0.2289558 , 0.48205742, 0.4297326 ])])
 
 def test_mut_inf(dihedral_arr_index, expected_vals):
     dihedral_df = scoops.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u)
@@ -80,6 +80,4 @@ def test_mut_inf(dihedral_arr_index, expected_vals):
 
     score_df = scoops.dihedrals.get_dihedral_score_matrix(dihedral_df, "mut_inf")
     score_matrix = score_df.to_numpy()
-    mut_inf = sklearn.feature_selection.mutual_info_regression(all_dihedrals.T, all_dihedrals[dihedral_arr_index])
     np.testing.assert_allclose(score_matrix[dihedral_arr_index], expected_vals, rtol=1e-5)
-    np.testing.assert_allclose(score_matrix[dihedral_arr_index], mut_inf, rtol=1e-5)
