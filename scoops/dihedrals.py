@@ -255,10 +255,7 @@ def get_dihedral_score_matrix(dihedrals_df, score):
         '''
         # The correlation coefficient is the covariance divided by the product of each variable's
         # standard deviation.  See https://en.wikipedia.org/wiki/Covariance_and_correlation.
-        stds = astropy.stats.circstats.circstd(dihed_vals, axis=1) ** 2
-        std_products = np.outer(stds, stds)
-        corr_matrix = covariance_matrix / std_products
-        return corr_matrix'''
+        '''
         variances = np.diagonal(covariance_matrix)
         #stds = np.sqrt(variances)
         #std_products = np.outer(stds, stds)
@@ -297,7 +294,7 @@ def get_dihedral_score_matrix(dihedrals_df, score):
         output_array = np.zeros((len(dihed_vals), len(dihed_vals)))
         print("output shape", output_array.shape)
         for i in range(len(dihed_vals)):
-            print(i)
+            print("starting row", i)
             for j in range(i, len(dihed_vals)):
                 dihed_i_vals = dihed_vals[i]
                 dihed_j_vals = dihed_vals[j]
@@ -442,68 +439,3 @@ def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=
         out_file.write("load %s\n\n" %(input_pdb_loc))
         for key, val in included_res_pairs_dict.items():
             out_file.write(val[1])
-
-
-    """
-
-
-
-    included_res_pairs_dict = {}
-    for i in range(len(score_df)):
-        this_row = score_df.iloc[i]
-        for j in range(i, len(score_df)):
-            this_score = abs(this_row[j])
-            if this_score > score_cutoff_at_percentile:
-                res_i = int(all_dihed_labels[i].split("_")[0])
-                res_j = int(all_dihed_labels[j].split("_")[0])
-
-                if res_i > res_j:
-                    raise ValueError("show_network must only be used with DataFrames sorted by resindex, "
-                                     "not sorted by dihedral.")
-                # FIXME if res_i == res_j, ignore this score.  But be careful: my previous
-                # work allows comparing different dihedrals from the same residue.
-
-                # Determine where the score's magnitude ranks among all scores.
-                mat_size = len(score_df)
-                full_rows_passed = i * mat_size
-                # FIXME correct for missing diags.
-                pos_in_1d_array = j + full_rows_passed
-                rank = ranks[pos_in_1d_array]
-                rank_fraction_in_percentile =  (rank - rank_of_nth_percentile) / num_points_above_percentile
-                # High-ranked dihedral pairs are colored more strongly.
-                color = 1 - rank_fraction_in_percentile
-                res_i_atom = u.select_atoms("resindex %d and name CA" %(res_i))[0]
-                res_i_pos = res_i_atom.position
-                res_j_atom = u.select_atoms("resindex %d and name CA" %(res_j))[0]
-                res_j_pos = res_j_atom.position
-                
-                res_pair = "%d_%d" %(res_i, res_j)
-                this_str = ""
-                # The 9.0 indicates that the shape is a cylinder.  The remaining arguments are the
-                # x,y,z coordinates of the two ends of the cylinder, the radius, the r,g,b colors
-                # of each end of the cylinder, and the cylinder's name.
-                this_str += ('cmd.load_cgo([9.0, %f,%f,%f, %f,%f,%f, %f, %f,%f,1, %f,%f,1], "line_%d")\n'
-                             %(res_i_pos[0], res_i_pos[1], res_i_pos[2], res_j_pos[0], res_j_pos[1], res_j_pos[2],
-                               rad, color, color, color, color, rank))
-                if labels:
-                    # PyMOL requires that the label be placed at the location of a pseudoatom.  Create a
-                    # pseudoatom halfway along the line. Hide the pseudoatom itself.
-                    mid_pos = (res_i_pos + res_j_pos) / 2
-                    this_str += ("pseudoatom center_%d_%d, pos=[%f, %f, %f]\n" %(res_i, res_j, mid_pos[0], mid_pos[1], mid_pos[2]))
-                    this_str += ('label center_%d_%d, "res_%d_%d"\n' %(res_i, res_j, res_i, res_j))
-                    this_str += ("hide wire, center_%s\n" %(res_pair))
-                    
-                ### Sometimes two residues can have multiple dihedrals that are strongly related. ###
-                ### When this happens, only draw a line for the strongest pairing.  Otherwise the ###
-                ### script will draw overlapping lines with different colors. ###
-                if res_pair not in included_res_pairs_dict:
-                    included_res_pairs_dict[res_pair] = [rank, this_str]
-                else:
-                    other_dihed_rank = included_res_pairs_dict[res_pair][0]
-                    if rank > other_dihed_rank:
-                        included_res_pairs_dict[res_pair] = [rank, this_str]
-    
-    with open(output_script_loc, "w") as out_file:
-        out_file.write("load %s\n\n" %(input_pdb_loc))
-        for key, val in included_res_pairs_dict.items():
-            out_file.write(val[1])"""
