@@ -205,7 +205,7 @@ def get_dihedrals_for_resindex_list(resindex_list, u, step=None, start=None, sto
     return all_dihedrals_df
 
 
-def get_dihedral_score_matrix(dihedrals_df, score):
+def get_dihedral_score_matrix(dihedrals_df, score, mut_inf_bins = 25):
     """
     Get a matrix containing relatedness scores between dihedrals.
 
@@ -218,6 +218,9 @@ def get_dihedral_score_matrix(dihedrals_df, score):
     score : string
         Either 'inv_cov' or 'covariance' or 'circ_corr' or 'mut_inf.  Controls which
         score metric is used.
+    mut_inf_bins : int, optional
+        The number of bins used in mutual information calculation.  `mut_inf_bins` is only used if
+        `score=mut_inf`.  The default value is 25
 
     Returns
     -------
@@ -275,7 +278,8 @@ def get_dihedral_score_matrix(dihedrals_df, score):
                 raise ValueError("Both inputs must have the same length.")
             
             num_frames = len(dihed_1_vals)
-            bins = np.arange(-3.15, 3.16, 0.252) # 25 bins from -pi to pi.
+            step = 6.3 / mut_inf_bins
+            bins = np.arange(-3.15, 3.142+step, step) # bins from -pi to pi.
             hist_2d, x_edges, y_edges = np.histogram2d(dihed_1_vals, dihed_2_vals, bins=bins)
 
             # a1 and a2 are given values of dihedral_1 and dihedral_2.  This code
