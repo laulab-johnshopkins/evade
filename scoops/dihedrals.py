@@ -309,7 +309,7 @@ def get_dihedral_score_matrix(dihedrals_df, score, mut_inf_bins = 25):
         return score_df
 
 
-def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=0.2, labels=False,
+def show_network(score_df, u, percentile, first_frame_pdb_loc, output_script_loc, rad=0.2, labels=False,
                  exclude="same_dihedrals"):
     """
     Write a PyMOL script for showing high-scoring pairs of dihedrals.
@@ -330,14 +330,15 @@ def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=
     score_df : pandas DataFrame
         The output of `get_dihedral_score_matrix`.
     u : MDAnalysis universe
-        The universe object that the data are taken from.  The trajectory should be on the same frame as
-        `input_pdb_loc`.
+        The MDAnalysis universe that the data are taken from.  This universe will automatically be set to
+        the first frame.
     percentile : integer
         The percentile cutoff for which dihedral pairs will be displayed.  This should be a number between 1 and 100.
-    input_pdb_loc : string
-        The location of a PDB file containing the atoms in `u`, at the same frame as `u`.  This PDB file isn't
+    first_frame_pdb_loc : string
+        The location of a PDB file containing the atoms in `u`, at the first frame as `u`.  This PDB file isn't
         read by `show_network`; it is just added to the output PDB file.  So `show_network` will still run if
-        there are differences between `input_pdb_loc` and `u`.
+        there are differences between `first_frame_pdb_loc` and `u`, but the correlation lines won't match
+        the atom positions.
     output_script_loc : string
         The location of the PyMOL script that `show_network` will write.  It should end in .pml.
     rad : float, optional
@@ -345,13 +346,14 @@ def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=
     labels : boolean, optional
         Whether to write labels for each line.  The labels list the resindex (assigned by MDAnalysis) of
         each residue in the pair.  NOTE: these resindices may differ from the residue numbering used in the MD
-        trajectory and `input_pdb_loc`.
+        trajectory and `first_frame_pdb_loc`.
     exclude : string or None, optional
         Whether to exclude comparisons against self from the calculations.  If `exclude="same_dihedrals"` then
         diagonal elements of `score_df` will be excluded from calculating percentiles and showing lines.  If
         `exclude=None` then diagonals will be included.  The default is `exclude="same_dihedrals"`.
     """
     
+    u.trajectory[0]
     # Create a list of lists where each inner
     # list is [pair_labels, score] for non-diagonal (or non-same-residue) pairings.
     # Also, create a list that only has all the scores (in the same order).
@@ -440,6 +442,6 @@ def show_network(score_df, u, percentile, input_pdb_loc, output_script_loc, rad=
                     included_res_pairs_dict[pair_string] = [rank, this_str]
 
     with open(output_script_loc, "w") as out_file:
-        out_file.write("load %s\n\n" %(input_pdb_loc))
+        out_file.write("load %s\n\n" %(first_frame_pdb_loc))
         for key, val in included_res_pairs_dict.items():
             out_file.write(val[1])
