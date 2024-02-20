@@ -25,7 +25,7 @@ class AtomGeo:
     Attributes
     ----------
     mda_atomgroup : MDAnalysis AtomGroup containing one atom
-        An AtonGroup containing the atom that was passed during
+        An AtomGroup containing the atom that was passed during
         object construction.  mda_atomgroup[0] accesses the atom.
     voxel_sphere : trimesh VoxelGrid
         The sphere that was passed during object construction.
@@ -136,9 +136,6 @@ class ProteinSurface:
             approx_trans_y = round(approx_trans_y, 5)
             approx_trans_z = round(exact_trans[2] / grid_size) * grid_size
             approx_trans_z = round(approx_trans_z, 5)
-
-            #print("next_voxel before trans", next_voxel.points)
-            #print("approx_trans:", approx_trans_x, approx_trans_y, approx_trans_z)
 
             next_voxel.apply_translation(np.array([approx_trans_x, approx_trans_y,
                                                    approx_trans_z]))

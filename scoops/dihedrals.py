@@ -260,8 +260,6 @@ def get_dihedral_score_matrix(dihedrals_df, score, mut_inf_bins = 25):
         # standard deviation.  See https://en.wikipedia.org/wiki/Covariance_and_correlation.
         '''
         variances = np.diagonal(covariance_matrix)
-        #stds = np.sqrt(variances)
-        #std_products = np.outer(stds, stds)
         variance_products = np.outer(variances, variances)
         std_products = np.sqrt(variance_products)
         
