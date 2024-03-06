@@ -1,8 +1,8 @@
-scoops
+davee
 ======
 
 .. toctree::
    :maxdepth: 4
 
-   scoops
+   davee
    setup

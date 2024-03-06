@@ -1,21 +1,21 @@
-scoops package
-==============
+davee package
+=============
 
 Submodules
 ----------
 
-scoops.dihedrals module
------------------------
+davee.dihedrals module
+----------------------
 
-.. automodule:: scoops.dihedrals
+.. automodule:: davee.dihedrals
    :members:
    :undoc-members:
    :show-inheritance:
 
-scoops.volumes module
----------------------
+davee.volumes module
+--------------------
 
-.. automodule:: scoops.volumes
+.. automodule:: davee.volumes
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ scoops.volumes module
 Module contents
 ---------------
 
-.. automodule:: scoops
+.. automodule:: davee
    :members:
    :undoc-members:
    :show-inheritance:

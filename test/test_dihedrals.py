@@ -3,7 +3,7 @@ import os
 import MDAnalysis as mda
 import numpy as np
 import sklearn
-import scoops
+import davee
 import astropy.stats
 
 # Initialize a Universe with the test dataset.
@@ -21,7 +21,7 @@ u = mda.Universe(example_data_loc)
                           (3, 1, [ 2.892332,  2.659219,  3.021759])])
 
 def test_psi(dihedral_arr_index, res_index, expected_vals):
-    dihedral_df = scoops.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3)
+    dihedral_df = davee.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3)
     all_dihedrals = dihedral_df.to_numpy()
     all_dihedral_labels = dihedral_df.index.tolist()
     psi_sel = u.residues[res_index].psi_selection()
@@ -37,7 +37,7 @@ def test_psi(dihedral_arr_index, res_index, expected_vals):
 @pytest.mark.parametrize("dihedral_arr_index, res_index, expected_vals",
                          [(6, 2, [-2.907020, -2.842374,  -2.833020])])
 def test_chi1_sort_by_dihedrals(dihedral_arr_index, res_index, expected_vals):
-    dihedral_df = scoops.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3, sort_by="dihedral")
+    dihedral_df = davee.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3, sort_by="dihedral")
     all_dihedrals = dihedral_df.to_numpy()
     all_dihedral_labels = dihedral_df.index.tolist()
     chi1_sel = u.residues[res_index].chi1_selection()
@@ -54,10 +54,10 @@ def test_chi1_sort_by_dihedrals(dihedral_arr_index, res_index, expected_vals):
                           (3, [ 0.526941,	-0.760539,	-0.527337,	1.000000,	-0.989922,	0.672220,	-0.047297,	0.890458])])
 
 def test_circ_corr(dihedral_arr_index, expected_vals):
-    dihedral_df = scoops.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3)
+    dihedral_df = davee.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u, stop=3)
     all_dihedrals = dihedral_df.to_numpy()
     all_dihedral_labels = dihedral_df.index.tolist()
-    score_df = scoops.dihedrals.get_dihedral_score_matrix(dihedral_df, "circ_corr")
+    score_df = davee.dihedrals.get_dihedral_score_matrix(dihedral_df, "circ_corr")
     score_matrix = score_df.to_numpy()
     # Construct a list of circular correlation coefficients from Astropy.  This list should be the
     # same as a row of the get_dihedrals_for_resindex_list output.
@@ -74,10 +74,10 @@ def test_circ_corr(dihedral_arr_index, expected_vals):
                           (4, [0.30944817, 0.48205742, 0.1978764 , 0.08630462, 0.67301167, 0.11157178, 0.29110317, 0.48205742])])
 
 def test_mut_inf(dihedral_arr_index, expected_vals):
-    dihedral_df = scoops.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u)
+    dihedral_df = davee.dihedrals.get_dihedrals_for_resindex_list(u.residues.resindices[0:3], u)
     all_dihedrals = dihedral_df.to_numpy()
     all_dihedral_labels = dihedral_df.index.tolist()
 
-    score_df = scoops.dihedrals.get_dihedral_score_matrix(dihedral_df, "mut_inf")
+    score_df = davee.dihedrals.get_dihedral_score_matrix(dihedral_df, "mut_inf")
     score_matrix = score_df.to_numpy()
     np.testing.assert_allclose(score_matrix[dihedral_arr_index], expected_vals, rtol=1e-5)

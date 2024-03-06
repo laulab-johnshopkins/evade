@@ -1,8 +1,8 @@
-[![CI Tests](https://github.com/DanielJamesEvans/scoops/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/scoops/actions/workflows/python-app.yml)
+[![CI Tests](https://github.com/DanielJamesEvans/DAVEE/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/DAVEE/actions/workflows/python-app.yml)
 
-# SCOOPS
+# DAVEE
 
-SCOOPS analyzes binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.
+DAVEE analyzes binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.
 
 ## Installation
 * Download this repository and `cd` into it.
@@ -11,10 +11,10 @@ SCOOPS analyzes binding site dynamics and allostery. It can find the volume of a
 
         
 ### Notes
-* A dependency fails when the ipywidgets version is too recent.  (This is documented [here](https://github.com/pyvista/pyvista/issues/3274).)  The SCOOPS requirements.txt automatically installs ipywidgets version 7.7.1, which is OK.  But if you install additional software after installing SCOOPS, then ipywidgets might get replaced.  This can be fixed with `pip install ipywidgets==7.7.1`.
+* A dependency fails when the ipywidgets version is too recent.  (This is documented [here](https://github.com/pyvista/pyvista/issues/3274).)  The DAVEE requirements.txt automatically installs ipywidgets version 7.7.1, which is OK.  But if you install additional software after installing DAVEE, then ipywidgets might get replaced.  This can be fixed with `pip install ipywidgets==7.7.1`.
 
 ## Usage
-To see how to use SCOOPS, please read the Jupyter notebook in the `example` directory.
+To see how to use DAVEE, please read the Jupyter notebook in the `example` directory.
 
 ## Troubleshooting
 * Issue: displaying proteins takes too long.
