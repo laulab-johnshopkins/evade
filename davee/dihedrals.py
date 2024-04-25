@@ -216,7 +216,7 @@ def get_dihedral_score_matrix(dihedrals_df, score, mut_inf_bins = 25):
     dihedrals_df : pandas DataFrame
         The output of `get_dihedrals_for_resindex_list`.
     score : string
-        Either 'inv_cov' or 'covariance' or 'circ_corr' or 'mut_inf.  Controls which
+        Either 'inv_cov' or 'covariance' or 'circ_corr' or 'mut_inf'.  Controls which
         score metric is used.
     mut_inf_bins : int, optional
         The number of bins used in mutual information calculation.  `mut_inf_bins` is only used if
