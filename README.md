@@ -14,7 +14,8 @@ DAVEE analyzes binding site dynamics and allostery. It can find the volume of a 
 * A dependency fails when the ipywidgets version is too recent.  (This is documented [here](https://github.com/pyvista/pyvista/issues/3274).)  The DAVEE requirements.txt automatically installs ipywidgets version 7.7.1, which is OK.  But if you install additional software after installing DAVEE, then ipywidgets might get replaced.  This can be fixed with `pip install ipywidgets==7.7.1`.
 
 ## Usage
-To see how to use DAVEE, please read the Jupyter notebook in the `example` directory.
+* To see how to use DAVEE, please read the Jupyter notebook in the `example` directory.
+* For complete documentation, download DAVEE and open `doc/build/index.html` in a web browser.
 
 ## Troubleshooting
 * Issue: displaying proteins takes too long.
