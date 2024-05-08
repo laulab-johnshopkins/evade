@@ -20,9 +20,8 @@ To see how to use the code, check the ``example`` directory included with the so
    visualization.rst
    troubleshooting.rst
 
-Indices and tables
-==================
+Index of all DAVEE functions
+============================
 
-* :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+
