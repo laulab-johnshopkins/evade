@@ -20,3 +20,10 @@ DAVEE analyzes binding site dynamics and allostery. It can find the volume of a 
 ## Troubleshooting
 * Issue: displaying proteins takes too long.
   * Possible solutions: simplify the sel\_regions, and/or increase grid\_size so the surface uses fewer voxels.
+* Issue: the volumes code returns `KeyError`:
+  * Solution: This probably means that the MDAnalysis universe does not have atom types.  Run this code to fix the issue for universe `u`:
+  
+      ```
+      for atom in u_desres.atoms:
+          atom.type = atom.name
+      ```
