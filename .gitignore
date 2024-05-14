@@ -7,3 +7,4 @@ aligned.pdb
 .DS_STORE
 .venv
 example/aligned.pdb
+doc/.DS_STORE
