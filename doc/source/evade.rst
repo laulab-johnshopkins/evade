@@ -1,21 +1,21 @@
-davee package
+evade package
 =============
 
 Submodules
 ----------
 
-davee.dihedrals module
+evade.dihedrals module
 ----------------------
 
-.. automodule:: davee.dihedrals
+.. automodule:: evade.dihedrals
    :members:
    :undoc-members:
    :show-inheritance:
 
-davee.volumes module
+evade.volumes module
 --------------------
 
-.. automodule:: davee.volumes
+.. automodule:: evade.volumes
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ davee.volumes module
 Module contents
 ---------------
 
-.. automodule:: davee
+.. automodule:: evade
    :members:
    :undoc-members:
    :show-inheritance:

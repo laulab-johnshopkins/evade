@@ -1,8 +1,7 @@
-davee
-======
+List of All Functions
+=====================
 
 .. toctree::
    :maxdepth: 4
 
-   davee
-   setup
+   evade

@@ -818,12 +818,12 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
 
     Parameters
     ----------
-    object_1 : DAVEE ProteinSurface or trimesh VoxelGrid
+    object_1 : EVADE ProteinSurface or trimesh VoxelGrid
         An object to be displayed.
-    object_2: DAVEE ProteinSurface or trimesh VoxelGrid, optional
+    object_2: EVADE ProteinSurface or trimesh VoxelGrid, optional
         Another object to be displayed.  The default is `None`, meaning that no object
         is passed for display.
-    object_3: DAVEE ProteinSurface or trimesh VoxelGrid, optional
+    object_3: EVADE ProteinSurface or trimesh VoxelGrid, optional
         Another object to be displayed.  The default is `None`, meaning that no object
         is passed for display.
     color_1 : string, optional
@@ -878,7 +878,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_1 must be None.")
     # If object_1 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     else:
-        raise TypeError("object_1 must be DAVEE.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid.")
+        raise TypeError("object_1 must be evade.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid.")
 
     # Convert object_1 to PyVista
     non_sel_1_vox = non_sel_1_region.copy()
@@ -918,7 +918,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_2 must be None.")
     # If object_2 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     elif object_2:
-        raise TypeError("object_2 must be DAVEE.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+        raise TypeError("object_2 must be evade.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
 
     # Convert object_2 to PyVista
     if object_2:
@@ -958,7 +958,7 @@ def show_in_jupyter(object_1, object_2=None, object_3=None, color_1="red", color
             raise TypeError("Cannot select regions of VoxelGrid.  sel_regions_3 must be None.")
     # If object_3 isn't a ProteinSurface or VoxelGrid, then the user has given invalid input.
     elif object_3:
-        raise TypeError("object_3 must be DAVEE.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
+        raise TypeError("object_3 must be evade.volumes.ProteinSurface or trimesh.voxel.base.VoxelGrid or None.")
 
     # Convert object_3 to PyVista
     if object_3:

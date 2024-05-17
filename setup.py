@@ -1,6 +1,6 @@
 from setuptools import setup
 
 setup(
-    name="davee",
-    packages=["davee"]
+    name="evade",
+    packages=["evade"]
 )

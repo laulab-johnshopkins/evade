@@ -56,7 +56,7 @@ To recreate this directory, do the following:
 
 ## <a name="gen_reqs"></a>Generating Requirements.txt
 * `poetry export --without-hashes -f requirements.txt --output requirements.txt`
-  * I would like to include hashes in requirements.txt.  This would increase security during software installation.  However, as described [here](https://github.com/python-poetry/poetry/issues/7122), poetry doesn't create hashes for some libraries.  This was observed to be an issue for a few DAVEE dependencies.
+  * I would like to include hashes in requirements.txt.  This would increase security during software installation.  However, as described [here](https://github.com/python-poetry/poetry/issues/7122), poetry doesn't create hashes for some libraries.  This was observed to be an issue for a few EVADE dependencies.
 
 ## <a name="imports"></a>Imports
 Code is listed in `__init__.py`.  This tells Python where to look for the code.  If `__init__.py` were blank, then users would need to explicitly import each submodule (`from a_module import a_submodule`).  Including code in `__init__.py` allows users to import all code by importing the base module.

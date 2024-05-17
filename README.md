@@ -1,8 +1,8 @@
-[![CI Tests](https://github.com/DanielJamesEvans/DAVEE/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/DAVEE/actions/workflows/python-app.yml)
+[![CI Tests](https://github.com/DanielJamesEvans/EVADE/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/EVADE/actions/workflows/python-app.yml)
 
-# DAVEE
+# EVADE
 
-DAVEE analyzes binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.
+EVADE analyzes binding site dynamics and allostery. It can find the volume of a pocket in an MD trajectory, suggest atom-atom distances as order parameters, and correlate an order parameter with dihedral motion.
 
 ## Installation
 * Download this repository and `cd` into it.
@@ -11,11 +11,11 @@ DAVEE analyzes binding site dynamics and allostery. It can find the volume of a 
 
         
 ### Notes
-* A dependency fails when the ipywidgets version is too recent.  (This is documented [here](https://github.com/pyvista/pyvista/issues/3274).)  The DAVEE requirements.txt automatically installs ipywidgets version 7.7.1, which is OK.  But if you install additional software after installing DAVEE, then ipywidgets might get replaced.  This can be fixed with `pip install ipywidgets==7.7.1`.
+* A dependency fails when the ipywidgets version is too recent.  (This is documented [here](https://github.com/pyvista/pyvista/issues/3274).)  The EVADE requirements.txt automatically installs ipywidgets version 7.7.1, which is OK.  But if you install additional software after installing EVADE, then ipywidgets might get replaced.  This can be fixed with `pip install ipywidgets==7.7.1`.
 
 ## Usage
-* To see how to use DAVEE, please read the Jupyter notebook in the `example` directory.
-* For complete documentation, download DAVEE and open `doc/build/index.html` in a web browser.
+* To see how to use EVADE, please read the Jupyter notebook in the `example` directory.
+* For complete documentation, download EVADE and open `doc/build/index.html` in a web browser.
 
 ## Troubleshooting
 * Issue: displaying proteins takes too long.
