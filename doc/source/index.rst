@@ -9,7 +9,7 @@ Welcome to EVADE's documentation!
 This software analyzes binding site dynamics and allostery.
 It can find the volume of a pocket in an MD trajectory, identify residues at the pocket surface, and study how dihedrals influence
 each other across the protein. Source code
-can be found `here <https://github.com/DanielJamesEvans/EVADE>`_.
+can be found `here <https://github.com/laulab-johnshopkins/EVADE>`_.
 To see how to use the code, check the ``example`` directory included with the source code.
 
 

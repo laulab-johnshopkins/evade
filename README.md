@@ -1,4 +1,4 @@
-[![CI Tests](https://github.com/DanielJamesEvans/EVADE/actions/workflows/python-app.yml/badge.svg)](https://github.com/DanielJamesEvans/EVADE/actions/workflows/python-app.yml)
+[![CI Tests](https://github.com/laulab-johnshopkins/EVADE/actions/workflows/python-app.yml/badge.svg)](https://github.com/laulab-johnshopkins/EVADE/actions/workflows/python-app.yml)
 
 # EVADE
 
