@@ -17,6 +17,7 @@ EVADE should work on any standard Mac or Linux workstation/laptop.  Installation
 ## Usage
 * To see how to use EVADE, please read the Jupyter notebooks in the `example` directory.
 * These example notebooks should run in a matter of minutes (or sooner).
+* IMPORTANT: pocket visualization only works in Jupyter Notebook (not Jupyter Lab).
 * For complete documentation, download EVADE and open `doc/build/index.html` in a web browser.
 
 ## Troubleshooting
