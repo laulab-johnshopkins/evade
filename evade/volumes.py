@@ -96,9 +96,9 @@ class ProteinSurface:
         voxel_points[start_index:end_index] = next_voxel.points
         num_atoms += 1
         start_index = end_index
-        min_x = next_voxel.origin[0]
-        min_y = next_voxel.origin[1]
-        min_z = next_voxel.origin[2]
+        min_x = next_voxel.translation[0]
+        min_y = next_voxel.translation[1]
+        min_z = next_voxel.translation[2]
         if surf:
             self.surf = surf
             self.atom_geo_list = atom_geo_list
@@ -147,9 +147,9 @@ class ProteinSurface:
             start_index = end_index
             num_atoms += 1
 
-            min_x = min(min_x, next_voxel.origin[0])
-            min_y = min(min_y, next_voxel.origin[1])
-            min_z = min(min_z, next_voxel.origin[2])
+            min_x = min(min_x, next_voxel.translation[0])
+            min_y = min(min_y, next_voxel.translation[1])
+            min_z = min(min_z, next_voxel.translation[2])
             new_atom_geo = AtomGeo(atom, next_voxel)
             self.atom_geo_list.append(new_atom_geo)
             self.dict_mda_index_to_atom_geo[atom.index] = new_atom_geo
@@ -485,9 +485,9 @@ def dilate_voxel_grid(voxel_grid):
     if not (voxel_grid.pitch[0] == voxel_grid.pitch[1] == voxel_grid.pitch[2]):
         raise ValueError("Pitches must be equal in all 3 dimensions")
     big_array = np.pad(voxel_grid.matrix, pad_width=((1,0), (1,0), (1,0)), constant_values=False)
-    dilated_x_orig = voxel_grid.origin[0] - voxel_grid.scale[0]
-    dilated_y_orig = voxel_grid.origin[1] - voxel_grid.scale[1]
-    dilated_z_orig = voxel_grid.origin[2] - voxel_grid.scale[2]
+    dilated_x_orig = voxel_grid.translation[0] - voxel_grid.scale[0]
+    dilated_y_orig = voxel_grid.translation[1] - voxel_grid.scale[1]
+    dilated_z_orig = voxel_grid.translation[2] - voxel_grid.scale[2]
     dilated_matrix = scipy.ndimage.binary_dilation(big_array)
 
     dilated_vg = trimesh.voxel.VoxelGrid(dilated_matrix)
